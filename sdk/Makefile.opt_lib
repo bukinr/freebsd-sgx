@@ -73,7 +73,7 @@ all: $(CHECK_OPT)
 	$(MAKE) components
 
 .PHONY: components
-components: tstdc tstdcxx tservice trts tcrypto tkey_exchange ukey_exchange ptrace sample_crypto simulation signtool edger8r tsetjmp tcmalloc
+components: tstdc tstdcxx tservice trts tcrypto tkey_exchange ukey_exchange sample_crypto simulation signtool edger8r tsetjmp tcmalloc
 
 # ---------------------------------------------------
 #  tstdc
@@ -96,16 +96,17 @@ endif
 LIBIRC_NAME := libirc.a
 
 $(LIBTLIBC): tlibthread compiler-rt $(LIBM_PATH)/libimf.a $(LIBIRC_PATH)/$(LIBIRC_NAME) $(SVML_PATH)/libsvml.a
-	$(MAKE) -C tlibc/ -j4 2> /dev/null
+	$(MAKE) -C tlibc/ -j4
 	@$(MKDIR) $(BUILD_DIR)/.libimf   $(BUILD_DIR)/.libirc   $(BUILD_DIR)/.libsvml   $(BUILD_DIR)/.tlibc   $(BUILD_DIR)/.tlibthread
-	@$(RM) -f $(BUILD_DIR)/.libimf/* $(BUILD_DIR)/.libirc/* $(BUILD_DIR)/.libsvml/* $(BUILD_DIR)/.tlibc/* $(BUILD_DIR)/.tlibthread/*
+	@$(RM) -rf $(BUILD_DIR)/.libimf $(BUILD_DIR)/.libirc $(BUILD_DIR)/.libsvml $(BUILD_DIR)/.tlibc $(BUILD_DIR)/.tlibthread
+	@mkdir $(BUILD_DIR)/.libimf $(BUILD_DIR)/.libirc $(BUILD_DIR)/.libsvml $(BUILD_DIR)/.tlibc $(BUILD_DIR)/.tlibthread
 	@cd $(BUILD_DIR)/.libimf     && $(AR) x $(LIBM_PATH)/libimf.a
 	@cd $(BUILD_DIR)/.libirc     && $(AR) x $(LIBIRC_PATH)/$(LIBIRC_NAME)
 	@cd $(BUILD_DIR)/.libsvml    && $(AR) x $(SVML_PATH)/libsvml.a
 	@cd $(BUILD_DIR)/.tlibc      && $(AR) x $(LINUX_SDK_DIR)/tlibc/libtlibc.a
 	@cd $(BUILD_DIR)/.tlibthread && $(AR) x $(LINUX_SDK_DIR)/tlibthread/libtlibthread.a
 	$(CP) compiler-rt/libcompiler-rt.a $@
-	$(AR) rsD $@ $(BUILD_DIR)/.libimf/*.o $(BUILD_DIR)/.libirc/*.o $(BUILD_DIR)/.libsvml/*.o $(BUILD_DIR)/.tlibc/*.o $(BUILD_DIR)/.tlibthread/*.o
+	echo $(BUILD_DIR)/.libimf/*.o $(BUILD_DIR)/.libirc/*.o $(BUILD_DIR)/.libsvml/*.o $(BUILD_DIR)/.tlibc/*.o $(BUILD_DIR)/.tlibthread/*.o | xargs gcc-ar48 rsD $@
 	@$(RM) -rf   $(BUILD_DIR)/.libimf     $(BUILD_DIR)/.libirc     $(BUILD_DIR)/.libsvml     $(BUILD_DIR)/.tlibc     $(BUILD_DIR)/.tlibthread
 
 .PHONY: tlibthread
@@ -118,27 +119,21 @@ compiler-rt:
 
 # ---------------------------------------------------
 #  tstdcxx
-#      includes: cpprt, tlibstdcxx
+#      includes: cpprt
 # ---------------------------------------------------
 .PHONY: tstdcxx
 tstdcxx: $(LIBTLIBCXX)
 
-$(LIBTLIBCXX): cpprt tlibstdcxx
-	@$(MKDIR) $(BUILD_DIR)/.cpprt   $(BUILD_DIR)/.tlibstdcxx
-	@$(RM) -f $(BUILD_DIR)/.cpprt/* $(BUILD_DIR)/.tlibstdcxx/*
+$(LIBTLIBCXX): cpprt
+	@$(MKDIR) $(BUILD_DIR)/.cpprt
+	@$(RM) -f $(BUILD_DIR)/.cpprt/*
 	@cd $(BUILD_DIR)/.cpprt      && $(AR) x $(LINUX_SDK_DIR)/cpprt/libcpprt.a
-	@cd $(BUILD_DIR)/.tlibstdcxx && $(AR) x $(LINUX_SDK_DIR)/tlibstdcxx/libtlibstdcxx.a
-	$(AR) rcsD $@ $(BUILD_DIR)/.cpprt/*.o $(BUILD_DIR)/.tlibstdcxx/*.o
-	@$(RM) -rf   $(BUILD_DIR)/.cpprt     $(BUILD_DIR)/.tlibstdcxx
+	$(AR) rcsD $@ $(BUILD_DIR)/.cpprt/*.o
+	@$(RM) -rf   $(BUILD_DIR)/.cpprt
 
 .PHONY: cpprt
 cpprt:
 	$(MAKE) -C cpprt 
-
-.PHONY: tlibstdcxx
-tlibstdcxx: $(BUILD_DIR)
-	$(MAKE) -C tlibstdcxx/ 2> /dev/null
-	$(CP) tlibstdcxx/README.sgx $(BUILD_DIR)/STLport_Changes_SGX.txt
 
 # ---------------------------------------------------
 #  tservice
@@ -232,7 +227,6 @@ clean:
 	$(MAKE) -C tlibthread/                         clean
 	$(MAKE) -C compiler-rt/                        clean
 	$(MAKE) -C cpprt                               clean
-	$(MAKE) -C tlibstdcxx/                         clean
 	$(MAKE) -C tseal/linux/                        clean
 	$(MAKE) -C selib/linux/                        clean
 	$(MAKE) -C tae_service/                        clean

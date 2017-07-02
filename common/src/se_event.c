@@ -32,7 +32,14 @@
 
 #include "se_event.h"
 
+#ifdef __FreeBSD__
+#define	__NR_futex 0
+#define	FUTEX_WAKE 0
+#define	FUTEX_WAIT 0
+#define	FUTEX_SET 0
+#else
 #include <linux/futex.h>
+#endif
 
 se_handle_t se_event_init(void)
 {

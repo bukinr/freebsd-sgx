@@ -49,21 +49,21 @@ else
     COMMON_FLAGS="-g -O2"
 fi
 
-COMMON_FLAGS="$COMMON_FLAGS -DNO_HEAP_CHECK -DTCMALLOC_SGX -DTCMALLOC_NO_ALIASES -fstack-protector"
+COMMON_FLAGS="$COMMON_FLAGS -DNO_HEAP_CHECK -DTCMALLOC_SGX -DTCMALLOC_NO_ALIASES -fstack-protector -I/usr/include"
 
 ENCLAVE_CFLAGS="$COMMON_FLAGS -ffreestanding -nostdinc -fvisibility=hidden -fPIC"
 ENCLAVE_CXXFLAGS="$ENCLAVE_CFLAGS -nostdinc++"
 CFLAGS="$CFLAGS $ENCLAVE_CFLAGS"
 CXXFLAGS="$CXXFLAGS $ENCLAVE_CXXFLAGS"
-CPPFLAGS="-I../../../common/inc -I../../../common/inc/tlibc -I../../../common/inc/internal/ -I../../../sdk/tlibstdcxx/stlport -I../../../sdk/trts/"
+CPPFLAGS="-I../../../common/inc -I../../../common/inc/tlibc -I../../../common/inc/internal/ -I/usr/include/c++/v1/ -I../../../sdk/trts/"
 
 if echo $CFLAGS | grep -q -- '-m32'; then
    HOST_OPT='--host=i386-linux-gnu'
 fi
 
-export CFLAGS
-export CXXFLAGS
-export CPPFLAGS
+#export CFLAGS
+#export CXXFLAGS
+#export CPPFLAGS
 $srcdir/configure $HOST_OPT --enable-shared=no \
    --disable-cpu-profiler \
    --disable-heap-profiler       \

@@ -31,9 +31,14 @@
 #ifndef _UAPI_ASM_X86_SGX_H
 #define _UAPI_ASM_X86_SGX_H
      
+#ifdef __FreeBSD__
+typedef uint64_t __u64;
+typedef uint16_t __u16;
+#else
 #include <linux/types.h>
 #include <linux/ioctl.h>
-     
+#endif
+
 #define SGX_MAGIC 0xA4
      
 #define SGX_IOC_ENCLAVE_CREATE \

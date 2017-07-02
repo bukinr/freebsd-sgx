@@ -42,7 +42,10 @@
 typedef int errno_t;
 #endif
 
-static inline errno_t memcpy_s(void *dest, size_t numberOfElements, const void *src, size_t count)
+#ifndef __FreeBSD__
+static
+#endif
+inline errno_t memcpy_s(void *dest, size_t numberOfElements, const void *src, size_t count)
 {
     if(numberOfElements<count)
         return -1;

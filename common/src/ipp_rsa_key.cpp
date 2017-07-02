@@ -46,7 +46,9 @@
 #include <string.h>
 #include <assert.h>
 
+#ifndef __FreeBSD__
 extern "C" int memset_s(void *s, size_t smax, int c, size_t n);
+#endif
 
 static IppStatus newPRNG(IppsPRNGState **pRandGen)
 {

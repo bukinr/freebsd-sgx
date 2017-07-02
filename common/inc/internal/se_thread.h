@@ -43,7 +43,7 @@
 #include <sys/syscall.h>
 #include <pthread.h>
 typedef pthread_mutex_t	se_mutex_t;
-typedef pid_t se_thread_id_t;
+typedef unsigned long se_thread_id_t;
 typedef pthread_key_t se_tls_index_t;
 
 #ifdef __cplusplus
@@ -58,7 +58,7 @@ int se_mutex_lock(se_mutex_t* mutex);
 int se_mutex_unlock(se_mutex_t* mutex);
 int se_mutex_destroy(se_mutex_t* mutex);
 
-unsigned int se_get_threadid(void);
+unsigned long se_get_threadid(void);
 
 /* tls functions */
 int se_tls_alloc(se_tls_index_t *tls_index);

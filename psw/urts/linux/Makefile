@@ -36,10 +36,10 @@ CXXFLAGS += -DDISABLE_TRACE
 CFLAGS += -DDISABLE_TRACE
 endif
 
-CXXFLAGS += -fPIC -Werror -g
+CXXFLAGS += -fPIC -g
 CXXFLAGS += $(ADDED_INC)
 
-CFLAGS += -fPIC -Werror -g
+CFLAGS += -fPIC -g
 CFLAGS += $(ADDED_INC)
 
 VTUNE_DIR = $(LINUX_EXTERNAL_DIR)/vtune/linux
@@ -56,7 +56,7 @@ INC += -I$(COMMON_DIR)/inc                \
 LDFLAGS := -lwrapper
 LDFLAGS += -Wl,-Bdynamic -lsgx_uae_service
 
-LDFLAGS += -L$(VTUNE_DIR)/sdk/src/ittnotify -littnotify -ldl
+LDFLAGS += -L$(VTUNE_DIR)/sdk/src/ittnotify -littnotify
 LDFLAGS += -Wl,--version-script=urts.lds
 
 DIR1 := $(LINUX_PSW_DIR)/urts/linux

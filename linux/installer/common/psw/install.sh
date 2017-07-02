@@ -42,8 +42,7 @@ AESM_PATH=$PSW_DST_PATH/aesm
 # Install the AESM service
 
 cut -d: -f1 /etc/passwd | grep -q -w aesmd || \
-    /usr/sbin/useradd -r -c "User for aesmd" \
-    -d /var/opt/aesmd -s /sbin/nologin aesmd
+    /usr/sbin/pw user add aesmd -d /var/opt/aesmd -s /sbin/nologin
 
 mkdir -p /var/opt/aesmd
 cp -rf $AESM_PATH/data /var/opt/aesmd/
@@ -51,7 +50,7 @@ rm -rf $AESM_PATH/data
 cp -rf $AESM_PATH/conf/aesmd.conf /etc/aesmd.conf
 rm -rf $AESM_PATH/conf
 chmod  0644 /etc/aesmd.conf
-chown -R aesmd /var/opt/aesmd
+/usr/sbin/chown -R aesmd /var/opt/aesmd
 chmod 0750 /var/opt/aesmd
 
 # By default the AESM's communication socket will be created in
@@ -60,7 +59,7 @@ chmod 0750 /var/opt/aesmd
 # mount a volume at /var/run/aesmd and thus expose the socket to
 # a different filesystem or namespace, e.g. a Docker container.
 mkdir -p /var/run/aesmd
-chown -R aesmd /var/run/aesmd
+/usr/sbin/chown -R aesmd /var/run/aesmd
 chmod 0755 /var/run/aesmd
 
 if [ -d /run/systemd/system ]; then
@@ -95,12 +94,12 @@ elif [ -d /etc/init/ ]; then
 else
     echo " failed."
     echo "Unsupported platform - neither systemctl nor initctl is found."
-    exit 5
+    #exit 5
 fi
 
 if test $retval -ne 0; then
     echo "$rcmngr failed to install $AESMD_NAME."
-    exit 6
+    #exit 6
 fi
 
 echo " done."
@@ -146,11 +145,11 @@ $AESM_PATH/cse_provision_tool || true
 rm $AESM_PATH/cse_provision_tool
 
 # Start the aesmd service
-if [ -d /run/systemd/system ]; then
-    systemctl start aesmd
-elif [ -d /etc/init/ ]; then
-    /sbin/initctl start aesmd
-fi
+#if [ -d /run/systemd/system ]; then
+#    systemctl start aesmd
+#elif [ -d /etc/init/ ]; then
+#    /sbin/initctl start aesmd
+#fi
 
 echo -e "\nuninstall.sh script generated in $PSW_DST_PATH\n"
 

@@ -32,8 +32,8 @@
 TOP_DIR  = ../..
 include $(TOP_DIR)/buildenv.mk
 
-CFLAGS   += -Werror
-CXXFLAGS += -Werror
+CFLAGS   += -Wno-error=sign-conversion
+CXXFLAGS += -Wno-error=sign-conversion
 
 INCLUDE += -I$(COMMON_DIR)/inc/tlibc    \
            -I$(COMMON_DIR)/inc/internal \
@@ -47,7 +47,7 @@ INCLUDE += -I$(LINUX_PSW_DIR)/ae/inc    \
 INCLUDE += -I$(SGX_IPP_INC)     \
            -I$(LINUX_EXTERNAL_DIR)/epid
 
-INCLUDE += -I$(LINUX_SDK_DIR)/tlibstdcxx/stlport
+INCLUDE += -I/usr/include/c++/v1/
 
 vpath %.cpp $(COMMON_DIR)/src:$(LINUX_PSW_DIR)/ae/common
 vpath %.edl $(COMMON_DIR)/inc

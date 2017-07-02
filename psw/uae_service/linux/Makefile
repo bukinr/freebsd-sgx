@@ -33,8 +33,8 @@ TOP_DIR  = ../../..
 include $(TOP_DIR)/buildenv.mk
 
 IPC_COMMON_DIR        := $(TOP_DIR)/psw/ae/common
-IPC_COMMON_SRC_DIR    := $(IPC_COMMON_DIR)/src
-IPC_COMMON_INC_DIR    := $(IPC_COMMON_DIR)/inc
+IPC_COMMON_SRC_DIR    := $(IPC_COMMON_DIR)/src -I/usr/local/include
+IPC_COMMON_INC_DIR    := $(IPC_COMMON_DIR)/inc -I/usr/local/include
 IPC_COMMON_PROTO_DIR  := $(IPC_COMMON_DIR)/proto
 UAE_WRAPPER_DIR        := ../uae_wrapper
 UAE_SRC_DIR    := $(UAE_WRAPPER_DIR)/src
@@ -57,9 +57,9 @@ INCLUDE += -I$(LINUX_EXTERNAL_DIR)/epid     \
            -I$(IPC_COMMON_PROTO_DIR) \
            -I$(LINUX_PSW_DIR)/ae/aesm_service/source
 
-CXXFLAGS += -fPIC -Werror -g -DPROTOBUF_INLINE_NOT_IN_HEADERS=0
+CXXFLAGS += -fPIC -g -DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 
-EXTERNAL_LIB += -lprotobuf 
+EXTERNAL_LIB += -L/usr/local/lib -lprotobuf -I/usr/local/include
  
 vpath %.cpp .. $(COMMON_DIR)/src  $(IPC_COMMON_SRC_DIR) $(IPC_COMMON_PROTO_DIR) $(UAE_SRC_DIR) $(AE_COMMON_DIR)
 
@@ -94,9 +94,7 @@ IPC_SRC  := AECloseSessionRequest.cpp    \
              AEGetLaunchTokenResponse.cpp  \
              UnixCommunicationSocket.cpp \
              AEGetQuoteRequest.cpp \
-             UnixSocketFactory.cpp \
-             NonBlockingUnixCommunicationSocket.cpp \
-             NonBlockingUnixSocketFactory.cpp
+             UnixSocketFactory.cpp
 
 PROTOBUF_SRC  :=  messages.pb.cc
 
@@ -148,7 +146,7 @@ $(IPC_SRC:.cpp=.o) : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
 AEServicesImpl.o : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
 
 messages.pb.o : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
-	$(CXX) $(filter-out -Wshadow, $(CXXFLAGS)) -c $< -o $@
+	$(CXX) $(filter-out -Wshadow, $(CXXFLAGS)) -I/usr/include/c++/v1/ -I/usr/local/include -c $< -o $@
 %.o :%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 

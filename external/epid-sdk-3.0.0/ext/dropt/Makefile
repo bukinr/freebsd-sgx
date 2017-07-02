@@ -7,7 +7,7 @@ DROPT_OBJ = $(DROPT_SRC:.c=.o)
 DROPT_LIB = ./src/libdropt.a
 
 $(DROPT_OBJ): %.o: %.c
-	$(CC) -o $@ -c $(CFLAGS) -I$(DROPT_INCLUDE_DIR) $<
+	$(CC) -o $@ -c $(CFLAGS) -I$(DROPT_INCLUDE_DIR) -Wno-error $<
 
 $(DROPT_LIB): $(DROPT_OBJ)
 	$(AR) rc $@ $^

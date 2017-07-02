@@ -44,6 +44,7 @@ AESM_EXTENSION := $(LINUX_PSW_DIR)/ae/aesm_service/source/aesm/extension
 
 INCLUDE += -I$(COMMON_DIR)/inc \
            -I$(COMMON_DIR)/inc/internal \
+           -I/usr/local/include \
            -I./include         \
            -I./include/oal     \
            -I./source/         \
@@ -237,10 +238,8 @@ IPC_SRC  :=  AECloseSessionRequest.cpp    \
              SocketTransporter.cpp \
              AEGetLaunchTokenResponse.cpp  \
              UnixCommunicationSocket.cpp \
-             NonBlockingUnixCommunicationSocket.cpp \
              AEGetQuoteRequest.cpp \
-             UnixSocketFactory.cpp \
-             NonBlockingUnixSocketFactory.cpp
+             UnixSocketFactory.cpp
 
 PROTOBUF_SRC  := messages.pb.cc
 
@@ -302,7 +301,7 @@ CAESMServer.o : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 messages.pb.o : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
-	$(CXX) $(filter-out -Wshadow, $(CXXFLAGS)) $(INCLUDE) -c $< -o $@
+	$(CXX) $(filter-out -Wshadow, $(CXXFLAGS)) $(INCLUDE) -I/usr/include/c++/v1/ -c $< -o $@
 
 consttime_memequal.o :consttime_memequal.c
 	$(CC) $(filter-out -O2,$(CFLAGS)) -fPIC -O1 $(INCLUDE) -c $< -o $@
@@ -311,7 +310,7 @@ sqlite3.o :sqlite3.c
 	$(CC) $(SQLITECFLAGS) $(INCLUDE) -c $< -o $@
 
 $(APPNAME): $(OBJ) $(LIBNAME) sgx_tcrypto -lrdrand urts
-	$(CXX) $(CXXFLAGS) $(OBJ) $(LIBNAME) $(LDUFLAGS) $(EXTERNAL_LIB)   -o $@ -ldl
+	$(CXX) $(CXXFLAGS) $(OBJ) $(LIBNAME) $(LDUFLAGS) $(EXTERNAL_LIB) /usr/lib/libc++.a -o $@
 
 $(APPNAME_DEBUG): $(APPNAME)
 ifndef DEBUG
@@ -336,7 +335,7 @@ $(RDRAND_MAKEFILE):
 ifeq ($(ARCH), x86)
 	@cd $(RDRAND_LIBDIR);./configure
 else
-	@cd $(RDRAND_LIBDIR);./configure CFLAGS=-fPIC
+	@cd $(RDRAND_LIBDIR);./configure CFLAGS=-fPIC CXX=g++48 CC=gcc48
 endif
 
 ${AESM_EXTENSION}/launch_enclave_u.c: ${LINUX_PSW_DIR}/ae/le/launch_enclave.edl

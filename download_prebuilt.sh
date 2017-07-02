@@ -46,7 +46,7 @@ if [ $? -ne 0 ]; then
     echo "Fail to download file $server_optlib_url"
     exit -1
 fi
-md5sum $out_dir/$optlib_name > check_sum.txt
+md5 $out_dir/$optlib_name > check_sum.txt
 grep $optlib_md5 check_sum.txt
 if [ $? -ne 0 ]; then 
     echo "File $server_optlib_url checksum failure"
@@ -58,11 +58,11 @@ if [ $? -ne 0 ]; then
     echo "Fail to download file $server_ae_url"
     exit -1
 fi
-md5sum $out_dir/$ae_file_name > check_sum.txt
+md5 $out_dir/$ae_file_name > check_sum.txt
 grep $ae_md5 check_sum.txt
 if [ $? -ne 0 ]; then
     echo "File $server_ae_url checksum failure"
     exit -1
 fi
 
-pushd $out_dir;tar -xf $optlib_name;tar -xf $ae_file_name;rm -f $optlib_name;rm -f $ae_file_name;popd
+/bin/csh -c "pushd $out_dir;tar -xf $optlib_name;tar -xf $ae_file_name;rm -f $optlib_name;rm -f $ae_file_name;popd"

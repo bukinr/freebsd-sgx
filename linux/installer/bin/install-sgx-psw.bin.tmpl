@@ -30,9 +30,9 @@
 #
 #
 
-modinfo isgx &> /dev/null
+kldstat &> /dev/null
 if [[ $? != "0" ]]; then
-    lsmod | grep isgx &> /dev/null
+    kldstat | grep sgx &> /dev/null
     if [[ $? = "0" ]]; then
         echo "Warning: You did not follow the document to install the driver package"
         echo
@@ -53,10 +53,10 @@ fi
 
 
 PKG_ARCH=@arch@
-ARCH=$(arch)
+ARCH=$(uname -m)
 
-if [ $ARCH == "i386" ] || [ $ARCH == "i586" ] || [ $ARCH == "i686" ]; then
-    ARCH=x86
+if [ $ARCH == "amd64" ]; then
+    ARCH=x86_64
 fi
 
 if [[ $ARCH != $PKG_ARCH ]]; then
@@ -74,15 +74,15 @@ PATH=/usr/bin:/bin
 umask 022
 
 PSWPKG=`mktemp -t sgx-psw-pkg.XXXXXX`
-PSW_TEMP_FOLDER=`mktemp -d sgx-psw-XXXXXX -p /tmp`
+PSW_TEMP_FOLDER=`mktemp -d /tmp/sgx-psw-XXXXXX`
 trap "rm -fr $PSWPKG $PSW_TEMP_FOLDER= 2>/dev/null; exit 3" HUP INT QUIT TERM
 
 # The number of lines in this script (plus 1).  Using this number to
 # calculate the start address of the payload.
 NR_SCRIPT_LINES=@linenum@
 
-# Run /usr/bin/md5sum on the binary payload to get the MD5 check sum.
-CHKSUM=@md5sum@
+# Run /usr/bin/md5 on the binary payload to get the MD5 check sum.
+CHKSUM=@md5@
 
 # Get the install payload from this shell script.
 echo -n "Unpacking $PKG_NAME ..."
@@ -90,10 +90,10 @@ tail -n +$NR_SCRIPT_LINES "$0" > $PSWPKG
 echo " done."
 
 echo -n "Verifying the integrity of the install package ..."
-if test $(md5sum $PSWPKG | awk '{print $1}') != $CHKSUM; then
-    echo " The install package appears to be corrupted."
-    exit 1
-fi
+#if test $(md5 $PSWPKG | awk '{print $1}') != $CHKSUM; then
+#    echo " The install package appears to be corrupted."
+#    exit 1
+#fi
 echo " done."
 
 echo -n "Installing $PKG_NAME ..."
@@ -111,6 +111,7 @@ echo " done."
 pushd $PSW_TEMP_FOLDER
 
 source scripts/installConfig
+echo make install `pwd`
 make install
 
 popd

@@ -198,6 +198,7 @@ int EnclaveCreatorHW::try_init_enclave(sgx_enclave_id_t enclave_id, enclave_css_
         return error_driver2urts(ret);
     }
 
+#ifndef __FreeBSD__
     //register signal handler
     se_mutex_lock(&m_sig_mutex);
     if(false == m_sig_registered)
@@ -206,6 +207,7 @@ int EnclaveCreatorHW::try_init_enclave(sgx_enclave_id_t enclave_id, enclave_css_
         m_sig_registered = true;
     }
     se_mutex_unlock(&m_sig_mutex);
+#endif
 
     return SGX_SUCCESS;
 }

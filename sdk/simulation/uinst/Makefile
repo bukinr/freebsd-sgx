@@ -46,7 +46,7 @@ CPPFLAGS += -I$(COMMON_DIR)/inc/         \
             -I$(LINUX_PSW_DIR)/urts      \
             -I$(SGX_IPP_INC)
 
-CXXFLAGS += -Werror -fPIC
+CXXFLAGS += -fPIC
 
 OBJ1 := linux/set_tls.o \
         linux/restore_tls.o
@@ -63,7 +63,7 @@ enclave_mngr.o: enclave_mngr.cpp
 # since the '_SE3' function has assumptions on stack layout.
 #
 u_instructions.o: u_instructions.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -O0 -Wno-error=cpp -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -O0 -c $< -o $@
 
 $(LIBSESIMU_U): u_instructions.o enclave_mngr.o $(OBJ1)
 	$(AR) rcs $@ $^

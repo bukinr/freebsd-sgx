@@ -57,7 +57,7 @@ LIBTLIBCXX := $(BUILD_DIR)/libsgx_tstdcxx.a
 LIBTSE     := $(BUILD_DIR)/libsgx_tservice.a
 
 .PHONY: all
-all: tstdc tstdcxx tservice trts tcrypto tkey_exchange ukey_exchange ptrace sample_crypto simulation signtool edger8r tsetjmp tcmalloc
+all: tstdc tstdcxx tservice trts tcrypto tkey_exchange ukey_exchange sample_crypto simulation signtool edger8r tsetjmp tcmalloc
 
 # ---------------------------------------------------
 #  tstdc

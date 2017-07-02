@@ -87,7 +87,7 @@ esac
 trap "rm -f ${SCRIPT_DIR}/$TARBALL_NAME 2>/dev/null" 0
 
 # Create the tarball and compute its MD5 check sum.
-m=$(md5sum ${SCRIPT_DIR}/$TARBALL_NAME | awk '{print $1}')
+m=$(md5 ${SCRIPT_DIR}/$TARBALL_NAME | awk '{print $1}')
 v=$(awk '/STRFILEVER/ {print $3}' ${ROOT_DIR}/common/inc/internal/se_version.h|sed 's/^\"\(.*\)\"$/\1/')
 TEMPLATE_FILE=$SCRIPT_DIR/install-sgx-"$INSTALLER_TYPE".bin.tmpl
 INSTALLER_NAME=$SCRIPT_DIR/sgx_linux_"${PACKAGE_SUFFIX}"_"$INSTALLER_TYPE"_"$v".bin
@@ -95,7 +95,7 @@ l=$(wc -l $TEMPLATE_FILE | awk '{print $1}')
 l=$(($l+1))
 
 sed -e "s:@linenum@:$l:" \
-    -e "s:@md5sum@:$m:"  \
+    -e "s:@md5@:$m:"  \
     -e "s:@arch@:$ARCH:"  \
     $TEMPLATE_FILE > $INSTALLER_NAME
 

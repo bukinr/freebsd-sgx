@@ -33,6 +33,10 @@
 #include "global_data.h"
 #include <string.h>
 
+#if !defined(ElfW)
+#define ElfW(type) Elf_##type
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif

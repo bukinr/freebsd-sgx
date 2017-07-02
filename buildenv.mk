@@ -67,7 +67,7 @@ INCLUDE :=
 CUR_DIR := $(realpath $(call parent-dir,$(lastword $(wordlist 2,$(words $(MAKEFILE_LIST)),x $(MAKEFILE_LIST)))))
 
 # turn on stack protector for SDK
-COMMON_FLAGS += -fstack-protector
+COMMON_FLAGS += -fstack-protector -Wno-error=sign-conversion
 
 ifdef DEBUG
     COMMON_FLAGS += -ggdb -DDEBUG -UNDEBUG
@@ -87,10 +87,10 @@ COMMON_FLAGS += -Wall -Wextra -Winit-self -Wpointer-arith -Wreturn-type \
 		-Wcast-align -Wconversion -Wredundant-decls
 
 # additional warnings flags for C
-CFLAGS += -Wjump-misses-init -Wstrict-prototypes -Wunsuffixed-float-constants
+CFLAGS += -Wstrict-prototypes -Wno-error=sign-conversion
 
 # additional warnings flags for C++
-CXXFLAGS += -Wnon-virtual-dtor
+CXXFLAGS += -Wnon-virtual-dtor -Wno-error=sign-conversion -Wno-error=unused-parameter -Wno-error=sign-conversion
 
 # for static_assert()
 CXXFLAGS += -std=c++0x
@@ -109,7 +109,7 @@ CXXFLAGS += -std=c++0x
 HOST_FILE_PROGRAM := file
 
 UNAME := $(shell uname -m)
-ifneq (,$(findstring 86,$(UNAME)))
+ifneq (,$(findstring amd64,$(UNAME)))
     HOST_ARCH := x86
     ifneq (,$(shell $(HOST_FILE_PROGRAM) -L $(SHELL) | grep 'x86[_-]64'))
         HOST_ARCH := x86_64

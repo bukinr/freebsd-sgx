@@ -8,6 +8,7 @@
  * Swap macro that enforces a happens-before relationship with a corresponding
  * ATOMIC_LOAD.
  */
+#ifndef __FreeBSD__
 #if __has_feature(cxx_atomic)
 #define ATOMIC_SWAP(addr, val)\
 	__atomic_exchange(addr, val, __ATOMIC_ACQ_REL)
@@ -23,6 +24,13 @@
 #define ATOMIC_LOAD(addr)\
 	__atomic_load(addr, __ATOMIC_ACQUIRE)
 #else
+#define ATOMIC_LOAD(addr)\
+	(__sync_synchronize(), *addr)
+#endif
+#else /* __FreeBSD__ */
+
+#define ATOMIC_SWAP(addr, val)\
+	__sync_swap(addr, val)
 #define ATOMIC_LOAD(addr)\
 	(__sync_synchronize(), *addr)
 #endif

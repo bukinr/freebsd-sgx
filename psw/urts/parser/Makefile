@@ -40,7 +40,7 @@ TARGET := libenclaveparser.a
 CXXFLAGS += -fPIC -USE_DEBUG_LEVEL -DSE_DEBUG_LEVEL=SE_TRACE_WARNING
 
 ifneq ($(HOST_OS), darwin)
-  CXXFLAGS += -Werror
+  CXXFLAGS +=
 endif
 
 CXXFLAGS += -I$(COMMON_DIR)/inc/         \

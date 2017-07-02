@@ -43,6 +43,7 @@
 #include <errno.h>
 
 
+#ifndef __FreeBSD__
 typedef struct _ecall_param_t
 {
     tcs_t *tcs;
@@ -217,6 +218,7 @@ void reg_sig_handler()
     ret = sigaction(SIGTRAP, &sig_act, &g_old_sigact[SIGTRAP]);
     if (0 != ret) abort();
 }
+#endif
 
 //trust_thread is saved at stack for ocall.
 #define enter_enclave __morestack

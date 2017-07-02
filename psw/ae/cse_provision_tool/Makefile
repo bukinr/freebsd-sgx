@@ -35,7 +35,7 @@ include $(TOP_DIR)/buildenv.mk
 all: cse_provision_tool
 
 cse_provision_tool: cse_provision_tool.o
-	$(CXX) $(CXXFLAGS) -o $@ $< -ldl
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 %.o :%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@

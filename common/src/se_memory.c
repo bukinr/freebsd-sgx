@@ -35,6 +35,13 @@
 #include "se_trace.h"
 #include "util.h"
 
+#ifdef __FreeBSD__
+#define	O_LARGEFILE	0
+#define	LSEEK		lseek
+#else
+#define	LSEEK		lseek64
+#endif
+
 void* se_virtual_alloc(void* address, size_t size, uint32_t type)
 {
     UNUSED(type);
@@ -103,7 +110,7 @@ int se_read_process_mem(se_proc_t proc, void* base_addr, void* buffer, size_t si
     if(fd == -1)
         return FALSE;
 
-    if(lseek64(fd, offset, SEEK_SET) == -1)
+    if(LSEEK(fd, offset, SEEK_SET) == -1)
     {
         goto out;
     }
@@ -134,7 +141,7 @@ int se_write_process_mem(se_proc_t proc, void* base_addr, void* buffer, size_t s
     if(fd == -1)
         return FALSE;
 
-    if(lseek64(fd, offset, SEEK_SET) == -1)
+    if(LSEEK(fd, offset, SEEK_SET) == -1)
     {
         goto out;
     }

@@ -33,10 +33,22 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <string.h>
 #include <errno.h>
 
-#include "NonBlockingUnixCommunicationSocket.h"
+#include "UnixCommunicationSocket.h"
 #include "UnixServerSocket.h"
+
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(exp)            \
+  ({                                       \
+    decltype(exp) _rc;                     \
+    do {                                   \
+      _rc = (exp);                         \
+    } while (_rc == -1 && errno == EINTR); \
+    _rc;                                   \
+  })
+#endif
 
 UnixServerSocket::UnixServerSocket(const char* socketbase, const unsigned int clientTimeout) :
     mSocketBase(socketbase),
@@ -74,7 +86,7 @@ void UnixServerSocket::init()
     int rc = bind(mSocket, (sockaddr*)&server_address, server_len);
     if (rc < 0) {
         close(mSocket);
-        throw("Failed to create socket");
+        throw("Failed to bind socket");
     }
 
     chmod(mSocketBase, 0777);
@@ -92,7 +104,7 @@ ICommunicationSocket* UnixServerSocket::accept()
     if (client_sockfd < 0)
         return NULL;
 
-    NonBlockingUnixCommunicationSocket* sock = new NonBlockingUnixCommunicationSocket(client_sockfd);
+    UnixCommunicationSocket* sock = new UnixCommunicationSocket(client_sockfd);
 
     bool initializationSuccessfull = false;
 

@@ -11,7 +11,7 @@ PCP_LIB = ./src/libippcp.a
 
 
 $(PCP_OBJ): %.o: %.c
-	$(CC) $(CFLAGS) -I$(API_INCLUDE_DIR) -I$(SRC_INCLUDE_DIR) -I$(PCP_INCLUDE_DIR) -c -o $@ $<
+	$(CC) $(CFLAGS) -I$(API_INCLUDE_DIR) -I$(SRC_INCLUDE_DIR) -I$(PCP_INCLUDE_DIR) -Wno-error -c -o $@ $<
 
 $(PCP_LIB): $(PCP_OBJ)
 	$(AR) rc $@ $^

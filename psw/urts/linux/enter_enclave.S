@@ -38,7 +38,9 @@
 .text
 DECLARE_GLOBAL_FUNC __morestack
 
+#ifndef __FreeBSD__
 __morestack:
+#endif
 EENTER_PROLOG
     movl    frame_arg1, %edi                    /* fn */
 #if defined(__x86_64__)

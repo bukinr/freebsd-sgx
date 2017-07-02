@@ -30,7 +30,9 @@
 
 #include <string.h>
 
+#ifndef __FreeBSD__
 __weak_alias(index, strchr);
+#endif
 
 #ifdef _TLIBC_USE_INTEL_FAST_STRING_
 extern char *_intel_fast_strchr(const char *, int);

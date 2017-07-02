@@ -43,8 +43,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef __FreeBSD__
 #ifndef _TLIBC_CDECL_
 extern "C" int memset_s(void *s, size_t smax, int c, size_t n);
+#endif
 #endif
 
 extern "C" IppStatus create_rsa_pub_key(int n_byte_size, int e_byte_size, const Ipp32u *n, const Ipp32u *e, IppsRSAPublicKeyState **new_pub_key)

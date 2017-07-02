@@ -34,6 +34,9 @@
 #include <exception>
 #include <stdlib.h>
 #include <stdint.h>
+#ifdef __FreeBSD__
+#include <sys/types.h>
+#endif
 
 class SockDisconnectedException : public std::exception {
 };

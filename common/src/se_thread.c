@@ -38,7 +38,11 @@ void se_mutex_init(se_mutex_t* mutex)
 #elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
     se_mutex_t tmp = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 #else
-#error no pre-defined RECURSIVE_MUTEX found.
+    pthread_mutex_t tmp;
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&tmp, &attr);
 #endif
 
     /* C doesn't allow `*mutex = PTHREAD_..._INITIALIZER'.*/
@@ -49,7 +53,7 @@ int se_mutex_lock(se_mutex_t* mutex) { return (0 == pthread_mutex_lock(mutex)); 
 int se_mutex_unlock(se_mutex_t* mutex) { return (0 == pthread_mutex_unlock(mutex)); }
 int se_mutex_destroy(se_mutex_t* mutex) { return (0 == pthread_mutex_destroy(mutex));}
 
-unsigned int se_get_threadid(void) { return (unsigned)syscall(__NR_gettid);}
+unsigned long se_get_threadid(void) { return (unsigned long)pthread_self();}
 /* tls functions */
 int se_tls_alloc(se_tls_index_t *tls_index) { return !pthread_key_create(tls_index, NULL); }
 int se_tls_free(se_tls_index_t tls_index) { return !pthread_key_delete(tls_index); }

@@ -31,7 +31,10 @@
 
 ######## SGX SDK Settings ########
 
+CC = gcc48
+CXX = g++48
 SGX_SDK ?= /opt/intel/sgxsdk
+SGX_SDK = /home/br/dev/linux-sgx/build/linux/
 SGX_MODE ?= HW
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
@@ -48,10 +51,14 @@ ifeq ($(SGX_ARCH), x86)
 	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x86/sgx_sign
 	SGX_EDGER8R := $(SGX_SDK)/bin/x86/sgx_edger8r
 else
-	SGX_COMMON_CFLAGS := -m64
-	SGX_LIBRARY_PATH := $(SGX_SDK)/lib64
-	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x64/sgx_sign
-	SGX_EDGER8R := $(SGX_SDK)/bin/x64/sgx_edger8r
+	#SGX_COMMON_CFLAGS := -m64
+	#SGX_LIBRARY_PATH := $(SGX_SDK)/lib64
+	#SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x64/sgx_sign
+	#SGX_EDGER8R := $(SGX_SDK)/bin/x64/sgx_edger8r
+	SGX_COMMON_CFLAGS := -m64 -I/home/br/dev/linux-sgx/common/inc/ -I/usr/include/c++/v1/ -I/usr/include -D_LIBCPP_NO_EXCEPTIONS=1
+	SGX_LIBRARY_PATH := $(SGX_SDK)
+	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/sgx_sign
+	SGX_EDGER8R := $(SGX_SDK)/sgx_edger8r
 endif
 
 ifeq ($(SGX_DEBUG), 1)
@@ -73,7 +80,7 @@ TrustLib_Cpp_Files := $(wildcard LocalAttestationCode/*.cpp)
 TrustLib_Cpp_Objects := $(TrustLib_Cpp_Files:.cpp=.o)
 TrustLib_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SDK)/include/epid -I./Include
 TrustLib_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector  $(TrustLib_Include_Paths)
-TrustLib_Compile_Cxx_Flags :=  -std=c++03 -nostdinc++
+TrustLib_Compile_Cxx_Flags :=  -std=c++11 -nostdinc++
 
 UnTrustLib_Name := libLocalAttestation_unTrusted.a
 UnTrustLib_Cpp_Files := $(wildcard Untrusted_LocalAttestation/*.cpp)
@@ -238,7 +245,7 @@ $(UnTrustLib_Name): $(UnTrustLib_Cpp_Objects)
 
 ######## App Objects ########
 Enclave1/Enclave1_u.c Enclave1/Enclave1_u.h: $(SGX_EDGER8R) Enclave1/Enclave1.edl
-	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include 
+	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
 	@echo "GEN  =>  $@"
 
 App/Enclave1_u.o: Enclave1/Enclave1_u.c
@@ -246,7 +253,7 @@ App/Enclave1_u.o: Enclave1/Enclave1_u.c
 	@echo "CC   <=  $<"
 
 Enclave2/Enclave2_u.c Enclave2/Enclave2_u.h: $(SGX_EDGER8R) Enclave2/Enclave2.edl
-	@cd Enclave2 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include 
+	@cd Enclave2 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
 	@echo "GEN  =>  $@"
 
 App/Enclave2_u.o: Enclave2/Enclave2_u.c
@@ -254,7 +261,7 @@ App/Enclave2_u.o: Enclave2/Enclave2_u.c
 	@echo "CC   <=  $<"
 
 Enclave3/Enclave3_u.c Enclave3/Enclave3_u.h: $(SGX_EDGER8R) Enclave3/Enclave3.edl
-	@cd Enclave3 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include 
+	@cd Enclave3 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
 	@echo "GEN  =>  $@"
 
 App/Enclave3_u.o: Enclave3/Enclave3_u.c
@@ -273,7 +280,7 @@ $(App_Name): App/Enclave1_u.o App/Enclave2_u.o App/Enclave3_u.o $(App_Cpp_Object
 ######## Enclave Objects ########
 
 Enclave1/Enclave1_t.c Enclave1/Enclave1_t.h: $(SGX_EDGER8R) Enclave1/Enclave1.edl
-	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --trusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include 
+	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --trusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
 	@echo "GEN  =>  $@"
 
 Enclave1/Enclave1_t.o: Enclave1/Enclave1_t.c
@@ -281,7 +288,7 @@ Enclave1/Enclave1_t.o: Enclave1/Enclave1_t.c
 	@echo "CC   <=  $<"
 
 Enclave1/%.o: Enclave1/%.cpp Enclave1/Enclave1_t.h
-	@$(CXX) -std=c++03 -nostdinc++ $(Enclave_Compile_Flags) -c $< -o $@
+	@$(CXX) -std=c++11 -nostdinc++ $(Enclave_Compile_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 Enclave1.so: Enclave1/Enclave1_t.o $(Enclave_Cpp_Objects_1) $(Trust_Lib_Name)
@@ -293,7 +300,7 @@ $(Enclave_Name_1): Enclave1.so
 	@echo "SIGN =>  $@"
 
 Enclave2/Enclave2_t.c: $(SGX_EDGER8R) Enclave2/Enclave2.edl
-	@cd Enclave2 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include
+	@cd Enclave2 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
 	@echo "GEN  =>  $@"
 
 Enclave2/Enclave2_t.o: Enclave2/Enclave2_t.c
@@ -301,7 +308,7 @@ Enclave2/Enclave2_t.o: Enclave2/Enclave2_t.c
 	@echo "CC   <=  $<"
 
 Enclave2/%.o: Enclave2/%.cpp
-	@$(CXX) -std=c++03 -nostdinc++ $(Enclave_Compile_Flags) -c $< -o $@
+	@$(CXX) -std=c++11 -nostdinc++ $(Enclave_Compile_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 Enclave2.so: Enclave2/Enclave2_t.o $(Enclave_Cpp_Objects_2) $(Trust_Lib_Name)
@@ -313,7 +320,7 @@ $(Enclave_Name_2): Enclave2.so
 	@echo "SIGN =>  $@"
 
 Enclave3/Enclave3_t.c: $(SGX_EDGER8R) Enclave3/Enclave3.edl
-	@cd Enclave3 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include
+	@cd Enclave3 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
 	@echo "GEN  =>  $@"
 
 Enclave3/Enclave3_t.o: Enclave3/Enclave3_t.c
@@ -321,7 +328,7 @@ Enclave3/Enclave3_t.o: Enclave3/Enclave3_t.c
 	@echo "CC   <=  $<"
 
 Enclave3/%.o: Enclave3/%.cpp
-	@$(CXX) -std=c++03 -nostdinc++ $(Enclave_Compile_Flags) -c $< -o $@
+	@$(CXX) -std=c++11 -nostdinc++ $(Enclave_Compile_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 Enclave3.so: Enclave3/Enclave3_t.o $(Enclave_Cpp_Objects_3) $(Trust_Lib_Name)

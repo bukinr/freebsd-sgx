@@ -74,6 +74,11 @@ void signal_handler(int sig)
 }
 
 int main(int argc, char *argv[]) {
+
+    if (stat("/var/run/aesmd", NULL) == -1) {
+        mkdir("/var/run/aesmd", 0700);
+    }
+
     // The only command line option that is supported is --no-daemon.
     bool noDaemon = argc == 2 && (strcmp(argv[1], "--no-daemon") == 0);
     if ((argc > 2) || (argc == 2 && !noDaemon)) {

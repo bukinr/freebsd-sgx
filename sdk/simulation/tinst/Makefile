@@ -42,7 +42,7 @@ CPPFLAGS += -I$(COMMON_DIR)/inc/           \
             -I$(SIM_DIR)/uinst/            \
             -I$(LINUX_SDK_DIR)/selib
 
-CXXFLAGS += $(ENCLAVE_CXXFLAGS) -Werror -fno-exceptions -fno-rtti
+CXXFLAGS += $(ENCLAVE_CXXFLAGS) -fno-exceptions -fno-rtti
 
 LIBSESIMU_T := libsesimu_t.a
 

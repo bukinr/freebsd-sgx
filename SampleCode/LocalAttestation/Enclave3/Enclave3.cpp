@@ -228,7 +228,7 @@ uint32_t test_close_session(sgx_enclave_id_t src_enclave_id,
     }
     else
     {
-        return NULL;
+        return (0);
     }
     //Core reference code function for closing a session
     ke_status = close_session(src_enclave_id, dest_enclave_id);

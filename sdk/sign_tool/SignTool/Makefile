@@ -31,8 +31,8 @@
 
 include ../../../buildenv.mk
 
-CXXFLAGS += -Werror
-CFLAGS   += -Werror
+CXXFLAGS +=
+CFLAGS   +=
 
 INC += $(ADDED_INC)
 INC +=  -I$(COMMON_DIR)/inc                         \

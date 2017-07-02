@@ -36,7 +36,6 @@ CPPFLAGS += -I$(COMMON_DIR)/inc          \
             -I$(COMMON_DIR)/inc/tlibc
 
 CXXFLAGS += $(ENCLAVE_CXXFLAGS) \
-            -Werror         \
             -fno-exceptions \
             -fno-rtti
 

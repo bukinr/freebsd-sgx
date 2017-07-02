@@ -33,7 +33,7 @@
 #ifndef _BUFFER_H_
 #define _BUFFER_H_
 #include <stdint.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <memory.h>
 #include "aeerror.h"
 #include "se_wrapper.h"

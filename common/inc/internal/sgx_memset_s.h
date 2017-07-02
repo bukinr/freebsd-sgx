@@ -35,6 +35,8 @@
 #ifdef __cplusplus
 extern "C"
 #endif
+#ifndef __FreeBSD__
 int memset_s(void *s, size_t smax, int c, size_t n);
+#endif
 
 #endif

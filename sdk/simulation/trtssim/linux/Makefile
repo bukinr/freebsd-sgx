@@ -37,9 +37,9 @@ CPPFLAGS += -I$(COMMON_DIR)/inc/         \
             -I$(LINUX_SDK_DIR)/trts/
 
 CFLAGS   += $(ENCLAVE_CFLAGS)
-ASFLAGS  := -DSE_SIM -Werror $(CFLAGS)
-CFLAGS   += -DSE_SIM -Werror -fasynchronous-unwind-tables
-CXXFLAGS += -DSE_SIM -Werror $(ENCLAVE_CXXFLAGS)\
+ASFLAGS  := -DSE_SIM $(CFLAGS)
+CFLAGS   += -DSE_SIM -fasynchronous-unwind-tables
+CXXFLAGS += -DSE_SIM $(ENCLAVE_CXXFLAGS)\
             -fno-exceptions -fno-rtti
 
 

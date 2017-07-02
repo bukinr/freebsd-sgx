@@ -41,7 +41,7 @@ AEServicesImpl::AEServicesImpl(const char* socketbase) :
     mTransporter(NULL)
 {
     ProtobufSerializer * serializer             = new ProtobufSerializer();
-    NonBlockingUnixSocketFactory *socketFactory = new NonBlockingUnixSocketFactory(socketbase);
+    UnixSocketFactory *socketFactory            = new UnixSocketFactory(socketbase);
     mTransporter                                = new SocketTransporter(socketFactory, serializer);
 }
 

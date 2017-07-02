@@ -33,7 +33,7 @@
 include ../../buildenv.mk
 
 
-CXXFLAGS += -Werror -fno-rtti -fno-exceptions -fPIC
+CXXFLAGS += -fno-rtti -fno-exceptions -fPIC
 
 CPPFLAGS := -isystem $(SGX_IPP_INC) \
             -I$(COMMON_DIR)/inc/internal/           

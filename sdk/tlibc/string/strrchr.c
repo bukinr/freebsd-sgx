@@ -36,7 +36,9 @@
 extern char *_intel_fast_strrchr(const char *, int);
 #endif
 
+#ifndef __FreeBSD__
 __weak_alias(rindex, strrchr);
+#endif
 
 char *
 strrchr(const char *p, int ch)

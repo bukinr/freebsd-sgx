@@ -45,8 +45,8 @@ INCLUDES := -I..                                            \
             -I$(LINUX_PSW_DIR)/ae/inc/internal \
             -I$(LINUX_PSW_DIR)/ae/common  
 
-CXXFLAGS += -Wall -fPIC $(INCLUDES) -Werror -g
-CFLAGS := $(filter-out -fPIC -Werror, $(CFLAGS)) -Wall $(INCLUDES)
+CXXFLAGS += -Wall -fPIC $(INCLUDES) -g
+CFLAGS := $(filter-out -fPIC, $(CFLAGS)) -Wall $(INCLUDES)
 
 VERSION_SCRIPT = $(shell pwd)/uae_service_sim.linux.version
 LD_OPT_WITHVER = -Wl,--version-script=$(VERSION_SCRIPT)
@@ -57,7 +57,6 @@ RDRAND_MAKEFILE := $(RDRAND_LIBDIR)/Makefile
 EXTERNAL_LIB += -L$(IPP_LIBS_DIR) $(LD_IPP)
 EXTERNAL_LIB += -L$(RDRAND_LIBDIR) -lrdrand
 EXTERNAL_LIB += -L$(RDRAND_LIBDIR) -lrt
-EXTERNAL_LIB += -ldl
 
 vpath %.cpp $(LINUX_PSW_DIR)/ae/common \
             $(LINUX_SDK_DIR)/simulation/urtssim \
@@ -103,7 +102,7 @@ ifndef DEBUG
 endif
 
 %.o: %.c
-	$(CC) $(CFLAGS) -Werror -fPIC -c $< -o $@
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
@@ -116,7 +115,7 @@ $(RDRAND_MAKEFILE):
 ifeq ($(ARCH), x86)
 	@cd $(RDRAND_LIBDIR);./configure
 else
-	@cd $(RDRAND_LIBDIR);./configure CFLAGS=-fPIC
+	@cd $(RDRAND_LIBDIR);./configure CFLAGS=-fPIC CXX=g++48 CC=gcc48
 endif
 
 $(LIBUAE_SERVICE_DEPLOY): ../uae_service_deploy.c

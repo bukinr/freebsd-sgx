@@ -45,8 +45,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef __FreeBSD__
 #ifndef _TLIBC_CDECL_
 extern "C" int memset_s(void *s, size_t smax, int c, size_t n);
+#endif
 #endif
 
 extern "C" IppStatus 

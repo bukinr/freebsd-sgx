@@ -39,8 +39,8 @@ CXXFLAGS += -DDISABLE_TRACE
 CFLAGS += -DDISABLE_TRACE
 endif
 
-CXXFLAGS += -fPIC -DSE_SIM -Werror -g
-CFLAGS   += -fPIC -DSE_SIM -Werror -g
+CXXFLAGS += -fPIC -DSE_SIM -g
+CFLAGS   += -fPIC -DSE_SIM -g
 
 CPPFLAGS += $(ADDED_INC) #for ubuntu 11 and later version
 CPPFLAGS += -I$(COMMON_DIR)/inc                \
@@ -63,7 +63,7 @@ DIR4 := ../
 LDFLAGS += -L$(COMMON_DIR)/se_wrapper \
            -L$(SIM_DIR)/uae_service_sim/linux
 
-LDFLAGS += -L$(VTUNE_DIR)/sdk/src/ittnotify/ -littnotify -ldl
+LDFLAGS += -L$(VTUNE_DIR)/sdk/src/ittnotify/ -littnotify
 
 OBJ1 := enclave.o         \
         tcs.o             \

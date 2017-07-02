@@ -52,7 +52,8 @@ int getpagesize(void)
     return SE_PAGE_SIZE;
 }
 
-int mincore(void *addr, size_t length, unsigned char *vec)
+int
+mincore(const void *addr, size_t length, char *vec)
 {
     assert(sgx_is_within_enclave(addr, length));
 

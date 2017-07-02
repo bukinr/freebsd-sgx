@@ -31,15 +31,19 @@
 
 #include <sgx_spinlock.h>
 
+#ifndef __FreeBSD__
 static inline void _mm_pause(void) __attribute__((always_inline));
+#endif
 static inline int _InterlockedExchange(int volatile * dst, int val) __attribute__((always_inline));
 
+#ifndef __FreeBSD__
 static inline void _mm_pause(void)
 {
     __asm __volatile(
         "pause"
     );
 }
+#endif
 
 static inline int _InterlockedExchange(int volatile * dst, int val)
 {

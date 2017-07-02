@@ -38,7 +38,7 @@ CXXFLAGS += -DDISABLE_TRACE
 CFLAGS += -DDISABLE_TRACE
 endif
 
-CFLAGS += -Werror -fPIC
+CFLAGS += -fPIC
 
 CPPFLAGS += $(ADDED_INC) # for ubuntu 11 and later version
 CPPFLAGS += -I..                     \
