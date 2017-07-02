@@ -33,8 +33,9 @@
 
 CC = gcc48
 CXX = g++48
+CURDIR = $(shell pwd)
 SGX_SDK ?= /opt/intel/sgxsdk
-SGX_SDK = /home/br/dev/linux-sgx/build/linux/
+SGX_SDK = ${CURDIR}/../../build/linux/
 SGX_MODE ?= HW
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
@@ -55,7 +56,8 @@ else
 	#SGX_LIBRARY_PATH := $(SGX_SDK)/lib64
 	#SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x64/sgx_sign
 	#SGX_EDGER8R := $(SGX_SDK)/bin/x64/sgx_edger8r
-	SGX_COMMON_CFLAGS := -m64 -I/home/br/dev/linux-sgx/common/inc/ -I/usr/include/c++/v1/ -I/usr/include -D_LIBCPP_NO_EXCEPTIONS=1
+
+	SGX_COMMON_CFLAGS := -m64 -I${CURDIR}/../../common/inc/ -I/usr/include/c++/v1/ -I/usr/include -D_LIBCPP_NO_EXCEPTIONS=1
 	SGX_LIBRARY_PATH := $(SGX_SDK)
 	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/sgx_sign
 	SGX_EDGER8R := $(SGX_SDK)/sgx_edger8r
@@ -245,7 +247,7 @@ $(UnTrustLib_Name): $(UnTrustLib_Cpp_Objects)
 
 ######## App Objects ########
 Enclave1/Enclave1_u.c Enclave1/Enclave1_u.h: $(SGX_EDGER8R) Enclave1/Enclave1.edl
-	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
+	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include --search-path ${CURDIR}/../../common/inc/
 	@echo "GEN  =>  $@"
 
 App/Enclave1_u.o: Enclave1/Enclave1_u.c
@@ -253,7 +255,7 @@ App/Enclave1_u.o: Enclave1/Enclave1_u.c
 	@echo "CC   <=  $<"
 
 Enclave2/Enclave2_u.c Enclave2/Enclave2_u.h: $(SGX_EDGER8R) Enclave2/Enclave2.edl
-	@cd Enclave2 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
+	@cd Enclave2 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include --search-path ${CURDIR}/../../common/inc/
 	@echo "GEN  =>  $@"
 
 App/Enclave2_u.o: Enclave2/Enclave2_u.c
@@ -261,7 +263,7 @@ App/Enclave2_u.o: Enclave2/Enclave2_u.c
 	@echo "CC   <=  $<"
 
 Enclave3/Enclave3_u.c Enclave3/Enclave3_u.h: $(SGX_EDGER8R) Enclave3/Enclave3.edl
-	@cd Enclave3 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
+	@cd Enclave3 && $(SGX_EDGER8R) --use-prefix --untrusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include --search-path ${CURDIR}/../../common/inc/
 	@echo "GEN  =>  $@"
 
 App/Enclave3_u.o: Enclave3/Enclave3_u.c
@@ -280,7 +282,7 @@ $(App_Name): App/Enclave1_u.o App/Enclave2_u.o App/Enclave3_u.o $(App_Cpp_Object
 ######## Enclave Objects ########
 
 Enclave1/Enclave1_t.c Enclave1/Enclave1_t.h: $(SGX_EDGER8R) Enclave1/Enclave1.edl
-	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --trusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
+	@cd Enclave1 && $(SGX_EDGER8R) --use-prefix --trusted ../Enclave1/Enclave1.edl --search-path $(SGX_SDK)/include --search-path ${CURDIR}/../../common/inc/
 	@echo "GEN  =>  $@"
 
 Enclave1/Enclave1_t.o: Enclave1/Enclave1_t.c
@@ -300,7 +302,7 @@ $(Enclave_Name_1): Enclave1.so
 	@echo "SIGN =>  $@"
 
 Enclave2/Enclave2_t.c: $(SGX_EDGER8R) Enclave2/Enclave2.edl
-	@cd Enclave2 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
+	@cd Enclave2 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave2/Enclave2.edl --search-path $(SGX_SDK)/include --search-path ${CURDIR}/../../common/inc/
 	@echo "GEN  =>  $@"
 
 Enclave2/Enclave2_t.o: Enclave2/Enclave2_t.c
@@ -320,7 +322,7 @@ $(Enclave_Name_2): Enclave2.so
 	@echo "SIGN =>  $@"
 
 Enclave3/Enclave3_t.c: $(SGX_EDGER8R) Enclave3/Enclave3.edl
-	@cd Enclave3 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include --search-path /usr/home/br/dev/linux-sgx/common/inc/
+	@cd Enclave3 && $(SGX_EDGER8R)  --use-prefix --trusted ../Enclave3/Enclave3.edl --search-path $(SGX_SDK)/include --search-path ${CURDIR}/../../common/inc/
 	@echo "GEN  =>  $@"
 
 Enclave3/Enclave3_t.o: Enclave3/Enclave3_t.c
