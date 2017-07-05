@@ -32,6 +32,9 @@
 
 include ../../buildenv.mk
 
+CC = gcc48
+CXX = g++48
+
 CFLAGS   += $(ENCLAVE_CFLAGS)
 CXXFLAGS += $(ENCLAVE_CXXFLAGS)
 

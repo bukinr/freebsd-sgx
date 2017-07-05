@@ -77,7 +77,7 @@ all: $(CHECK_OPT)
 	$(MAKE) components
 
 .PHONY: components
-components: tstdc tstdcxx tservice trts tcrypto tkey_exchange ukey_exchange sample_crypto simulation signtool edger8r tsetjmp tcmalloc
+components: tstdc tstdcxx tcxx tservice trts tcrypto tkey_exchange ukey_exchange sample_crypto simulation signtool edger8r tsetjmp tcmalloc
 
 # ---------------------------------------------------
 #  tstdc
@@ -259,6 +259,7 @@ clean:
 	$(MAKE) -C tlibthread/                         clean
 	$(MAKE) -C compiler-rt/                        clean
 	$(MAKE) -C cpprt                               clean
+	$(MAKE) -C tlibcxx/                            clean
 	$(MAKE) -C tseal/linux/                        clean
 	$(MAKE) -C selib/linux/                        clean
 	$(MAKE) -C tae_service/                        clean
