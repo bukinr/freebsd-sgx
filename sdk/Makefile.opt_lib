@@ -34,14 +34,17 @@
 #  - Trusted libraries
 #        - tstdc:         libsgx_tstdc.a
 #        - tstdcxx:       libsgx_tstdcxx.a
+#        - tcxx:          libsgx_tcxx.a
 #        - tservice:      libsgx_tservice.a
 #        - trts:          libsgx_trts.a
 #        - tcrypto:       libsgx_tcrypto.a
 #        - tkey_exchange: libsgx_tkey_exchange.a
+#        - tprotected_fs: libsgx_tprotected_fs.a
 #        - tsetjmp:       libsgx_tsetjmp.a
 #        - tcmalloc:      libsgx_tcmalloc.a
 #  - Untrtusted libraries
 #        - ukey_exchange: libsgx_ukey_exchange.a
+#        - uprotected_fs: libsgx_uprotected_fs.a
 #        - sample_crypto: libsample_crypto.so (for sample code use)
 #        - ptrace:        libsgx_ptrace.so, gdb-sgx-plugin
 #  - Tools
@@ -54,6 +57,7 @@ include ../buildenv.mk
 
 LIBTLIBC   := $(BUILD_DIR)/libsgx_tstdc.a
 LIBTLIBCXX := $(BUILD_DIR)/libsgx_tstdcxx.a
+LIBTCXX    := $(BUILD_DIR)/libsgx_tcxx.a
 LIBTSE     := $(BUILD_DIR)/libsgx_tservice.a
 
 CHECK_OPT :=
@@ -136,6 +140,26 @@ cpprt:
 	$(MAKE) -C cpprt 
 
 # ---------------------------------------------------
+#  tcxx
+#      includes: cpprt, tlibcxx
+# ---------------------------------------------------
+.PHONY: tcxx
+tcxx: $(LIBTCXX)
+
+$(LIBTCXX): cpprt tlibcxx
+	@$(MKDIR) $(BUILD_DIR)/._cpprt   $(BUILD_DIR)/.tlibcxx
+	@$(RM) -f $(BUILD_DIR)/._cpprt/* $(BUILD_DIR)/.tlibcxx/*
+	@cd $(BUILD_DIR)/._cpprt      && $(AR) x $(LINUX_SDK_DIR)/cpprt/libcpprt.a
+	@cd $(BUILD_DIR)/.tlibcxx    && $(AR) x $(LINUX_SDK_DIR)/tlibcxx/libcxx.a
+	$(AR) rcsD $@ $(BUILD_DIR)/._cpprt/*.o $(BUILD_DIR)/.tlibcxx/*.o
+	@$(RM) -rf   $(BUILD_DIR)/._cpprt     $(BUILD_DIR)/.tlibcxx
+
+.PHONY: tlibcxx
+tlibcxx: $(BUILD_DIR)
+	$(MAKE) -C tlibcxx/ 2> /dev/null
+	$(CP) tlibcxx/README.sgx $(BUILD_DIR)/libc++_Changes_SGX.txt
+
+# ---------------------------------------------------
 #  tservice
 #      includes: selib, tseal, tae_service, ec_dh_lib 
 # ---------------------------------------------------
@@ -176,7 +200,7 @@ tcrypto:
 .PHONY: tkey_exchange
 tkey_exchange: edger8r
 	$(MAKE) -C tkey_exchange
-
+	
 .PHONY: tsetjmp
 tsetjmp:
 	$(MAKE) -C tsetjmp/
@@ -185,12 +209,20 @@ tsetjmp:
 tcmalloc:
 	$(MAKE) -C gperftools/
 
+.PHONY: tprotected_fs
+tprotected_fs: edger8r
+	$(MAKE) -C protected_fs/sgx_tprotected_fs
+	
 # ---------------------------------------------------
 #  Untrusted libraries
 # ---------------------------------------------------
 .PHONY: ukey_exchange
 ukey_exchange:
 	$(MAKE) -C ukey_exchange
+
+.PHONY: uprotected_fs
+uprotected_fs: edger8r
+	$(MAKE) -C protected_fs/sgx_uprotected_fs
 
 .PHONY: ptrace
 ptrace:
@@ -243,4 +275,5 @@ clean:
 	$(MAKE) -C edger8r/linux                       clean
 	@$(RM) $(LIBTLIBC) $(LIBTLIBCXX) $(LIBTSE)
 	@$(RM) $(BUILD_DIR)/STLport_Changes_SGX.txt
+	@$(RM) $(BUILD_DIR)/libc++_Changes_SGX.txt
 

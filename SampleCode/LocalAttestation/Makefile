@@ -80,7 +80,7 @@ endif
 Trust_Lib_Name := libLocalAttestation_Trusted.a
 TrustLib_Cpp_Files := $(wildcard LocalAttestationCode/*.cpp)
 TrustLib_Cpp_Objects := $(TrustLib_Cpp_Files:.cpp=.o)
-TrustLib_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SDK)/include/epid -I./Include
+TrustLib_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx -I$(SGX_SDK)/include/epid -I./Include
 TrustLib_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector  $(TrustLib_Include_Paths)
 TrustLib_Compile_Cxx_Flags :=  -std=c++11 -nostdinc++
 
@@ -143,9 +143,16 @@ Crypto_Library_Name := sgx_tcrypto
 Enclave_Cpp_Files_1 := $(wildcard Enclave1/*.cpp)
 Enclave_Cpp_Files_2 := $(wildcard Enclave2/*.cpp)
 Enclave_Cpp_Files_3 := $(wildcard Enclave3/*.cpp)
-Enclave_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I./LocalAttestationCode -I./Include
+Enclave_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx -I./LocalAttestationCode -I./Include
 
-Enclave_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(Enclave_Include_Paths)
+CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")
+ifeq ($(CC_BELOW_4_9), 1)
+	Enclave_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -fstack-protector
+else
+	Enclave_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -fstack-protector-strong
+endif
+
+Enclave_Compile_Flags += $(Enclave_Include_Paths)
 
 # To generate a proper enclave, it is recommended to follow below guideline to link the trusted libraries:
 #    1. Link sgx_trts with the `--whole-archive' and `--no-whole-archive' options,
@@ -156,10 +163,10 @@ Enclave_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpi
 # Otherwise, you may get some undesirable errors.
 Common_Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
 	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
-	-Wl,--start-group -lsgx_tstdc -lsgx_tstdcxx -l$(Crypto_Library_Name) -L. -lLocalAttestation_Trusted -l$(Service_Library_Name) -Wl,--end-group \
+	-Wl,--start-group -lsgx_tstdc -l$(Crypto_Library_Name) -L. -lLocalAttestation_Trusted -l$(Service_Library_Name) -Wl,--end-group \
 	-Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
 	-Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
-	-Wl,--defsym,__ImageBase=0
+	-Wl,--defsym,__ImageBase=0 -Wl,--gc-sections
 Enclave1_Link_Flags := $(Common_Enclave_Link_Flags) -Wl,--version-script=$(Enclave1_Version_Script)
 Enclave2_Link_Flags := $(Common_Enclave_Link_Flags) -Wl,--version-script=$(Enclave2_Version_Script)
 Enclave3_Link_Flags := $(Common_Enclave_Link_Flags) -Wl,--version-script=$(Enclave3_Version_Script)

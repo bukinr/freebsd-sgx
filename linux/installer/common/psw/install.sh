@@ -50,7 +50,7 @@ rm -rf $AESM_PATH/data
 cp -rf $AESM_PATH/conf/aesmd.conf /etc/aesmd.conf
 rm -rf $AESM_PATH/conf
 chmod  0644 /etc/aesmd.conf
-/usr/sbin/chown -R aesmd /var/opt/aesmd
+/usr/sbin/chown -R aesmd:aesmd /var/opt/aesmd
 chmod 0750 /var/opt/aesmd
 
 # By default the AESM's communication socket will be created in
@@ -59,7 +59,7 @@ chmod 0750 /var/opt/aesmd
 # mount a volume at /var/run/aesmd and thus expose the socket to
 # a different filesystem or namespace, e.g. a Docker container.
 mkdir -p /var/run/aesmd
-/usr/sbin/chown -R aesmd /var/run/aesmd
+/usr/sbin/chown -R aesmd:aesmd /var/run/aesmd
 chmod 0755 /var/run/aesmd
 
 if [ -d /run/systemd/system ]; then
@@ -113,6 +113,11 @@ if test \$(id -u) -ne 0; then
     exit 1
 fi
 
+get_lib()
+{
+    echo "\$(basename \$(gcc -print-multi-os-directory))"
+}
+
 # Killing AESM service
 /usr/sbin/service aesmd stop
 $DISABLE_AESMD
@@ -125,18 +130,18 @@ rm -fr /var/opt/aesmd
 rm -fr /var/run/aesmd
 
 # Removing runtime libraries
-rm -f /usr/lib/libsgx_uae_service.so
-rm -f /usr/lib/libsgx_urts.so
+rm -f /usr/\$(get_lib)/libsgx_uae_service.so
+rm -f /usr/\$(get_lib)/libsgx_urts.so
 rm -f /usr/lib/i386-linux-gnu/libsgx_uae_service.so
 rm -f /usr/lib/i386-linux-gnu/libsgx_urts.so
+
+# Removing AESM user and group
+/usr/sbin/userdel aesmd 2> /dev/null
 
 # Removing AESM folder
 rm -fr $PSW_DST_PATH
 
-# Removing AESM user and group
-/usr/sbin/userdel aesmd
-
-echo "SGX PSW uninstalled."
+echo "Intel(R) SGX PSW uninstalled."
 EOF
 
 chmod +x $PSW_DST_PATH/uninstall.sh
