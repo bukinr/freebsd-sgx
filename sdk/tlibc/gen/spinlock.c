@@ -67,7 +67,11 @@ uint32_t sgx_spin_lock(sgx_spinlock_t *lock)
     while(_InterlockedExchange((volatile int *)lock, 1) != 0) {
         while (*lock) {
             /* tell cpu we are spinning */
+#ifndef __FreeBSD__
             _mm_pause();
+#else
+            __asm __volatile("pause");
+#endif
         } 
     }
 

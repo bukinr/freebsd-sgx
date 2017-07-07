@@ -44,8 +44,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef __FreeBSD__
+#include <osreldate.h>
+#endif
 
-#ifndef __FreeBSD__
+#if (!defined(__FreeBSD__) || (defined(__FreeBSD__) && (__FreeBSD_version < 1200000)))
 #ifndef _TLIBC_CDECL_
 extern "C" int memset_s(void *s, size_t smax, int c, size_t n);
 #endif
