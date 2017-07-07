@@ -47,6 +47,10 @@ sdk_install_pkg: sdk
 psw_install_pkg: psw
 	./linux/installer/bin/build-installpkg.sh psw
 
+install:
+	cp build/linux/libsgx_uae_service.so /usr/lib/
+	cp build/linux/libsgx_urts.so /usr/lib/
+
 clean:
 	@$(MAKE) -C sdk/                                clean
 	@$(MAKE) -C psw/                                clean
