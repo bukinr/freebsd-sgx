@@ -44,14 +44,19 @@ static sgx_status_t dummy_init_switchless(void* ms) {
     return SGX_ERROR_UNEXPECTED;
 }
 /* Switchless SGX provides the real implementation for sl_init_uswitchless */
-weak_alias(dummy_init_switchless, do_init_switchless);
-
+//weak_alias(dummy_init_switchless, do_init_switchless);
+sgx_status_t do_init_switchless(void *ms) {
+	return (dummy_init_switchless(ms));
+};
 
 static sgx_status_t dummy_run_switchless_tworker(void* ms) {
     UNUSED(ms);
     return SGX_ERROR_UNEXPECTED;
 }
 /* Switchless SGX provides the real implementation for do_run_switchless_tworker */
-weak_alias(dummy_run_switchless_tworker, do_run_switchless_tworker);
+//weak_alias(dummy_run_switchless_tworker, do_run_switchless_tworker);
+sgx_status_t do_run_switchless_tworker(void *ms) {
+	return (dummy_run_switchless_tworker(ms));
+};
 
 }
