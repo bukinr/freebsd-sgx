@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,7 @@
 #include "provision_msg.h"
 #include "provision_enclave_t.c"
 #include "sgx_utils.h"
+#include "sgx_lfence.h"
 #include "aeerror.h"
 
 ae_error_t pve_error_2_ae_error(pve_status_t pve_error)
@@ -136,6 +137,12 @@ uint32_t proc_prov_msg2_data_wrapper(
         status = PVEC_PARAMETER_ERROR;
         goto ret_point;
     }
+
+    //
+    // for user_check SigRL input
+    // based on sigrl_size input parameter
+    //
+    sgx_lfence();
 
     if((sigrl==NULL&&sigrl_size!=0)||
         (sigrl!=NULL&&sigrl_size==0)){

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
 #include <errno.h>
 
 
-static SGX_FILE* sgx_fopen_internal(const char* filename, const char* mode, sgx_key_128bit_t *auto_key, sgx_key_128bit_t *kdk_key)
+static SGX_FILE* sgx_fopen_internal(const char* filename, const char* mode, const sgx_key_128bit_t *auto_key, const sgx_key_128bit_t *kdk_key)
 {
 	protected_fs_file* file = NULL;
 
@@ -49,7 +49,7 @@ static SGX_FILE* sgx_fopen_internal(const char* filename, const char* mode, sgx_
 	try {
 		file = new protected_fs_file(filename, mode, auto_key, kdk_key);
 	}
-	catch (std::bad_alloc e) {
+	catch (std::bad_alloc& e) {
 		(void)e; // remove warning
 		errno = ENOMEM;
 		return NULL;
@@ -72,7 +72,7 @@ SGX_FILE* sgx_fopen_auto_key(const char* filename, const char* mode)
 }
 
 
-SGX_FILE* sgx_fopen(const char* filename, const char* mode, sgx_key_128bit_t *key)
+SGX_FILE* sgx_fopen(const char* filename, const char* mode, const sgx_key_128bit_t *key)
 {
 	return sgx_fopen_internal(filename, mode, NULL, key);
 }
@@ -230,7 +230,7 @@ int32_t sgx_fexport_auto_key(const char* filename, sgx_key_128bit_t *key)
 }
 
 
-int32_t sgx_fimport_auto_key(const char* filename, sgx_key_128bit_t *key)
+int32_t sgx_fimport_auto_key(const char* filename, const sgx_key_128bit_t *key)
 {
 	SGX_FILE* stream = sgx_fopen_internal(filename, "r+", key, NULL);
 	if (stream == NULL)

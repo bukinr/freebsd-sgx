@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,16 +38,13 @@
 #include <sys/types.h>
 #endif
 
-class SockDisconnectedException : public std::exception {
-};
-
 class ICommunicationSocket{
     public:
         virtual ~ICommunicationSocket() {}
 
         //init returns true on successful connection
         virtual bool  init() =0;
-        virtual char* readRaw(ssize_t length) = 0; //throw(SockDisconnectedException) = 0;
+        virtual char* readRaw(ssize_t length) = 0;
         virtual ssize_t  writeRaw(const char* data, ssize_t length) = 0;
         virtual int   getSockDescriptor() = 0;
         virtual bool wasTimeoutDetected() = 0;

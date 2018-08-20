@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,8 +35,7 @@ include ../../buildenv.mk
 CFLAGS   += -Werror
 #CXXFLAGS += -Werror
 
-EPID_SDK_DIR := $(TOP_DIR)/external/epid-sdk-3.0.0/
-
+EPID_SDK_DIR := $(TOP_DIR)/external/epid-sdk/
 
 INCLUDE += -I.                                   \
            -I./include                           \
@@ -51,9 +50,7 @@ INCLUDE += -I.                                   \
 
 EXTERNAL_LIB += -lsgx_tstdcxx -lsgx_tcrypto                \
                 -L$(EPID_SDK_DIR)/epid/verifier -lverifier \
-                -L$(EPID_SDK_DIR)/epid/common -lcommon     \
-                -L$(EPID_SDK_DIR)/ext/ipp/sources/ippcpepid/src -lippcpepid
-
+                -L$(EPID_SDK_DIR)/epid/common -lcommon 
 
 SRC := $(wildcard *.cpp) $(wildcard ./X509_Parser/*.cpp)
 SRC += pse_pr_common.cpp   \
@@ -66,12 +63,12 @@ OBJS := $(sort $(OBJ) version.o)
 .PHONY: all
 all: $(SONAME) 
 
-.PHONY: EPID_SDK
-EPID_SDK:
+.PHONY: EPID
+EPID:
 	cd $(EPID_SDK_DIR) && ./configure prefix=/usr/local
-	$(MAKE) -C $(EPID_SDK_DIR)
-	
-$(SONAME): $(OBJS) EPID_SDK
+	$(MAKE) -C $(EPID_SDK_DIR) 2> /dev/null
+
+$(SONAME): $(OBJS) EPID
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) -nostdlib -nodefaultlibs -nostartfiles $(LDTFLAGS)
 	$(STRIP)  --strip-unneeded $(SONAME)
 
@@ -88,7 +85,9 @@ clean:
 	@$(RM) *.so
 	@$(RM) *.map
 	@$(RM) *_t.*
+ifeq ("$(shell test -f $(EPID_SDK_DIR)/Makefile && echo Makefile exists)", "Makefile exists")
 	-$(MAKE) -C $(EPID_SDK_DIR) clean
+endif
 	@$(RM) -r $(EPID_SDK_DIR)/Makefile $(EPID_SDK_DIR)/config.log $(EPID_SDK_DIR)/config.status
 
 .PHONY: rebuild

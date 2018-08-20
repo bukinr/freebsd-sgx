@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,6 +79,9 @@ void AESMQueueManager::enqueue(RequestData* requestData)
                 AESM_LOG_ERROR("Malformed request received (May be forged for attack)");
         }
 
+    }else {
+        delete requestData;
+        AESM_LOG_ERROR("Malformed request received (May be forged for attack)");
     }
 }
 

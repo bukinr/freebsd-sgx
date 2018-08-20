@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@ CPPFLAGS += -I$(COMMON_DIR)/inc/           \
             -I$(SIM_DIR)/assembly/         \
             -I$(SIM_DIR)/assembly/linux    \
             -I$(SIM_DIR)/uinst/            \
+            -I$(LINUX_PSW_DIR)/urts/linux  \
             -I$(LINUX_SDK_DIR)/selib
 
 CXXFLAGS += $(ENCLAVE_CXXFLAGS) -fno-exceptions -fno-rtti
@@ -53,10 +54,6 @@ all: $(LIBSESIMU_T)
 
 $(LIBSESIMU_T): $(OBJS)
 	$(AR) rcs $@ $^
-
-# Explicitly disable optimization for 't_instructions.cpp',
-# since the '_SE3' function has assumptions on stack layout.
-t_instructions.o: CXXFLAGS += -O0
 
 .PHONY: clean
 clean:

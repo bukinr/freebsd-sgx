@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
 #include "sgx_trts.h"
 #include "internal/se_cdefs.h"
 
-SGX_WEAK void* SGXAPI operator new[] (size_t dwBytes, const std::nothrow_t& nothrow_constant) throw()
+SGX_WEAK void* SGXAPI operator new[] (size_t dwBytes, const std::nothrow_t& nothrow_constant)
 {
 	return operator new(dwBytes, nothrow_constant);
 }

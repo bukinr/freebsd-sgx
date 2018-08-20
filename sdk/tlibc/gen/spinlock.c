@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@ static inline void _mm_pause(void) __attribute__((always_inline));
 static inline int _InterlockedExchange(int volatile * dst, int val) __attribute__((always_inline));
 
 #ifndef __FreeBSD__
-static inline void _mm_pause(void)
+static inline void _mm_pause(void)  /* definition requires -ffreestanding */
 {
     __asm __volatile(
         "pause"

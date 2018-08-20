@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -40,18 +40,21 @@
 #        - tcrypto:       libsgx_tcrypto.a
 #        - tkey_exchange: libsgx_tkey_exchange.a
 #        - tprotected_fs: libsgx_tprotected_fs.a
-#        - tsetjmp:       libsgx_tsetjmp.a
 #        - tcmalloc:      libsgx_tcmalloc.a
+#        - sgx_pcl:       libsgx_pcl.a
 #  - Untrtusted libraries
 #        - ukey_exchange: libsgx_ukey_exchange.a
 #        - uprotected_fs: libsgx_uprotected_fs.a
 #        - sample_crypto: libsample_crypto.so (for sample code use)
 #        - ptrace:        libsgx_ptrace.so, gdb-sgx-plugin
+#  - Standalone, untrusted libraries
+#        - libcapable:    libsgx_capable.a libsgx_capable.so
 #  - Tools
 #        - signtool:      sgx_sign
 #        - edger8r:       sgx_edger8r
+#        - sgx_encrypt:  sgx_encrypt
 #  - Simulation libraries and tools
-#        - simulation:    libsgx_trts_sim.a, libsgx_tservice_sim.a, libsgx_urts_sim.a, libsgx_uae_service_sim.a, sgx_config_cpusvn
+#        - simulation:    libsgx_trts_sim.a, libsgx_tservice_sim.a, libsgx_urts_sim.so, libsgx_uae_service_sim.so, sgx_config_cpusvn
 #
 include ../buildenv.mk
 
@@ -60,28 +63,12 @@ LIBTLIBCXX := $(BUILD_DIR)/libsgx_tstdcxx.a
 LIBTCXX    := $(BUILD_DIR)/libsgx_tcxx.a
 LIBTSE     := $(BUILD_DIR)/libsgx_tservice.a
 
-CHECK_OPT :=
-ifeq ("$(wildcard $(LINUX_EXTERNAL_DIR)/ippcp_internal/inc)", "")
-CHECK_OPT := opt_check_failed
-endif
-
-.PHONY: opt_check_failed
-opt_check_failed:
-	@echo "ERROR: Please run 'download_prebuilt.sh' to download the prebuilt optimized libraries before compiling."
-	@echo "Exiting......"
-	@exit -2
-
-
-.PHONY: all
-all: $(CHECK_OPT)
-	$(MAKE) components
-
 .PHONY: components
-components: tstdc tstdcxx tcxx tservice trts tcrypto tkey_exchange ukey_exchange sample_crypto simulation signtool edger8r tsetjmp tcmalloc
+components: tstdc tcxx tservice trts tcrypto tkey_exchange ukey_exchange sample_crypto libcapable signtool edger8r tcmalloc sgx_pcl sgx_encrypt
 
 # ---------------------------------------------------
 #  tstdc
-#      includes: tlibc, tlibthread, compiler-rt
+#      includes: tlibc, tlibthread, compiler-rt, tsafecrt
 #                libimf, libirc, libsvml, etc.
 # ---------------------------------------------------
 .PHONY: tstdc
@@ -99,27 +86,43 @@ endif
 
 LIBIRC_NAME := libirc.a
 
-$(LIBTLIBC): tlibthread compiler-rt $(LIBM_PATH)/libimf.a $(LIBIRC_PATH)/$(LIBIRC_NAME) $(SVML_PATH)/libsvml.a
-	$(MAKE) -C tlibc/ -j4
-	@$(MKDIR) $(BUILD_DIR)/.libimf   $(BUILD_DIR)/.libirc   $(BUILD_DIR)/.libsvml   $(BUILD_DIR)/.tlibc   $(BUILD_DIR)/.tlibthread
-	@$(RM) -rf $(BUILD_DIR)/.libimf $(BUILD_DIR)/.libirc $(BUILD_DIR)/.libsvml $(BUILD_DIR)/.tlibc $(BUILD_DIR)/.tlibthread
-	@mkdir $(BUILD_DIR)/.libimf $(BUILD_DIR)/.libirc $(BUILD_DIR)/.libsvml $(BUILD_DIR)/.tlibc $(BUILD_DIR)/.tlibthread
-	@cd $(BUILD_DIR)/.libimf     && $(AR) x $(LIBM_PATH)/libimf.a
-	@cd $(BUILD_DIR)/.libirc     && $(AR) x $(LIBIRC_PATH)/$(LIBIRC_NAME)
-	@cd $(BUILD_DIR)/.libsvml    && $(AR) x $(SVML_PATH)/libsvml.a
-	@cd $(BUILD_DIR)/.tlibc      && $(AR) x $(LINUX_SDK_DIR)/tlibc/libtlibc.a
-	@cd $(BUILD_DIR)/.tlibthread && $(AR) x $(LINUX_SDK_DIR)/tlibthread/libtlibthread.a
-	$(CP) compiler-rt/libcompiler-rt.a $@
-	echo $(BUILD_DIR)/.libimf/*.o $(BUILD_DIR)/.libirc/*.o $(BUILD_DIR)/.libsvml/*.o $(BUILD_DIR)/.tlibc/*.o $(BUILD_DIR)/.tlibthread/*.o | xargs gcc-ar48 rsD $@
-	@$(RM) -rf   $(BUILD_DIR)/.libimf     $(BUILD_DIR)/.libirc     $(BUILD_DIR)/.libsvml     $(BUILD_DIR)/.tlibc     $(BUILD_DIR)/.tlibthread
+$(LIBTLIBC): tlibthread compiler-rt tsafecrt tsetjmp $(LIBM_PATH)/libimf.a $(LIBIRC_PATH)/$(LIBIRC_NAME) $(SVML_PATH)/libsvml.a
+	$(MAKE) -C tlibc/ -j4 2> /dev/null
+	$(MKDIR) $(BUILD_DIR)/.libimf   $(BUILD_DIR)/.libirc   $(BUILD_DIR)/.compiler-rt   $(BUILD_DIR)/.tlibc  \
+	        $(BUILD_DIR)/.tlibthread $(BUILD_DIR)/.tsafecrt $(BUILD_DIR)/.tsetjmp
+	$(RM) -f $(BUILD_DIR)/.libimf/*        && cd $(BUILD_DIR)/.libimf     && $(AR) x $(LIBM_PATH)/libimf.a
+	$(RM) -f $(BUILD_DIR)/.libirc/*        && cd $(BUILD_DIR)/.libirc     && $(AR) x $(LIBIRC_PATH)/$(LIBIRC_NAME)
+	$(RM) -f $(BUILD_DIR)/.compiler-rt/*   && cd $(BUILD_DIR)/.compiler-rt && $(AR) x $(LINUX_SDK_DIR)/compiler-rt/libcompiler-rt.a
+	$(RM) -f $(BUILD_DIR)/.tlibc/*         && cd $(BUILD_DIR)/.tlibc      && $(AR) x $(LINUX_SDK_DIR)/tlibc/libtlibc.a
+	$(RM) -f $(BUILD_DIR)/.tlibthread/*    && cd $(BUILD_DIR)/.tlibthread && $(AR) x $(LINUX_SDK_DIR)/tlibthread/libtlibthread.a
+	$(RM) -f $(BUILD_DIR)/.tsafecrt/*      && cd $(BUILD_DIR)/.tsafecrt   && $(AR) x $(LINUX_SDK_DIR)/tsafecrt/libsgx_tsafecrt.a
+	$(RM) -f $(BUILD_DIR)/.tsetjmp/*       && cd $(BUILD_DIR)/.tsetjmp    && $(AR) x $(LINUX_SDK_DIR)/tsetjmp/libsgx_tsetjmp.a
+	$(CP) $(SVML_PATH)/libsvml.a $@
+	$(AR) qD $@ $(BUILD_DIR)/.libimf/*.o
+	$(AR) qD $@ $(BUILD_DIR)/.libirc/*.o
+	$(AR) qD $@ $(BUILD_DIR)/.compiler-rt/*.o
+	$(AR) qD $@ $(BUILD_DIR)/.tlibc/*.o
+	$(AR) qD $@ $(BUILD_DIR)/.tlibthread/*.o
+	$(AR) qD $@ $(BUILD_DIR)/.tsafecrt/*.o
+	$(AR) qD $@ $(BUILD_DIR)/.tsetjmp/*.o
+	@$(RM) -rf $(BUILD_DIR)/.libimf $(BUILD_DIR)/.libirc $(BUILD_DIR)/.compiler-rt $(BUILD_DIR)/.tlibc
+	@$(RM) -rf $(BUILD_DIR)/.tlibthread $(BUILD_DIR)/.tsafecrt $(BUILD_DIR)/.tsetjmp
 
 .PHONY: tlibthread
 tlibthread:
 	$(MAKE) -C tlibthread/
 
+.PHONY: tsafecrt
+tsafecrt:
+	$(MAKE) -C tsafecrt/
+
 .PHONY: compiler-rt
 compiler-rt:
 	$(MAKE) -C compiler-rt/ 2> /dev/null
+
+.PHONY: tsetjmp
+tsetjmp:
+	$(MAKE) -C tsetjmp/
 
 # ---------------------------------------------------
 #  tstdcxx
@@ -128,12 +131,13 @@ compiler-rt:
 .PHONY: tstdcxx
 tstdcxx: $(LIBTLIBCXX)
 
-$(LIBTLIBCXX): cpprt
-	@$(MKDIR) $(BUILD_DIR)/.cpprt
-	@$(RM) -f $(BUILD_DIR)/.cpprt/*
-	@cd $(BUILD_DIR)/.cpprt      && $(AR) x $(LINUX_SDK_DIR)/cpprt/libcpprt.a
-	$(AR) rcsD $@ $(BUILD_DIR)/.cpprt/*.o
-	@$(RM) -rf   $(BUILD_DIR)/.cpprt
+$(LIBTLIBCXX): cpprt tlibstdcxx
+	@$(MKDIR) $(BUILD_DIR)/.tlibstdcxx
+	@$(RM) -f $(BUILD_DIR)/.tlibstdcxx/*
+	@cd $(BUILD_DIR)/.tlibstdcxx      && $(AR) x $(LINUX_SDK_DIR)/tlibstdcxx/libtlibstdcxx.a
+	$(CP) $(LINUX_SDK_DIR)/cpprt/libcpprt.a $@
+	$(AR) qD $@ $(BUILD_DIR)/.tlibstdcxx/*.o
+	@$(RM) -rf   $(BUILD_DIR)/.tlibstdcxx
 
 .PHONY: cpprt
 cpprt:
@@ -147,12 +151,12 @@ cpprt:
 tcxx: $(LIBTCXX)
 
 $(LIBTCXX): cpprt tlibcxx
-	@$(MKDIR) $(BUILD_DIR)/._cpprt   $(BUILD_DIR)/.tlibcxx
-	@$(RM) -f $(BUILD_DIR)/._cpprt/* $(BUILD_DIR)/.tlibcxx/*
-	@cd $(BUILD_DIR)/._cpprt      && $(AR) x $(LINUX_SDK_DIR)/cpprt/libcpprt.a
-	@cd $(BUILD_DIR)/.tlibcxx    && $(AR) x $(LINUX_SDK_DIR)/tlibcxx/libcxx.a
-	$(AR) rcsD $@ $(BUILD_DIR)/._cpprt/*.o $(BUILD_DIR)/.tlibcxx/*.o
-	@$(RM) -rf   $(BUILD_DIR)/._cpprt     $(BUILD_DIR)/.tlibcxx
+	@$(MKDIR) $(BUILD_DIR)/.tlibcxx
+	@$(RM) -f $(BUILD_DIR)/.tlibcxx/*
+	@cd $(BUILD_DIR)/.tlibcxx      && $(AR) x $(LINUX_SDK_DIR)/tlibcxx/libcxx.a
+	$(CP) $(LINUX_SDK_DIR)/cpprt/libcpprt.a $@
+	$(AR) qD $@ $(BUILD_DIR)/.tlibcxx/*.o
+	@$(RM) -rf   $(BUILD_DIR)/.tlibcxx
 
 .PHONY: tlibcxx
 tlibcxx: $(BUILD_DIR)
@@ -201,10 +205,6 @@ tcrypto:
 tkey_exchange: edger8r
 	$(MAKE) -C tkey_exchange
 	
-.PHONY: tsetjmp
-tsetjmp:
-	$(MAKE) -C tsetjmp/
-
 .PHONY: tcmalloc
 tcmalloc:
 	$(MAKE) -C gperftools/
@@ -213,6 +213,9 @@ tcmalloc:
 tprotected_fs: edger8r
 	$(MAKE) -C protected_fs/sgx_tprotected_fs
 	
+.PHONY: sgx_pcl
+sgx_pcl:
+	$(MAKE) -C protected_code_loader
 # ---------------------------------------------------
 #  Untrusted libraries
 # ---------------------------------------------------
@@ -233,6 +236,20 @@ sample_crypto:
 	$(MAKE) -C sample_libcrypto
 
 # ---------------------------------------------------
+#  standalone, untrusted libraries
+# ---------------------------------------------------
+.PHONY: libcapable
+libcapable:
+	$(MAKE) -C libcapable/linux/
+
+# ---------------------------------------------------
+#  Switchless
+# ---------------------------------------------------
+.PHONY: switchless
+switchless: trts tlibc edger8r
+	$(MAKE) -C switchless/
+
+# ---------------------------------------------------
 #  simualtion libraries and tools
 # ---------------------------------------------------
 .PHONY: simulation
@@ -250,6 +267,10 @@ signtool:
 edger8r:
 	$(MAKE) -C edger8r/linux/
 
+.PHONY: sgx_encrypt
+sgx_encrypt: tservice
+	$(MAKE) -C encrypt_enclave
+
 $(BUILD_DIR):
 	$(MKDIR) $@
 
@@ -265,15 +286,20 @@ clean:
 	$(MAKE) -C tae_service/                        clean
 	$(MAKE) -C trts/                               clean
 	$(MAKE) -C tsetjmp/                            clean
+	$(MAKE) -C tsafecrt/                           clean
 	$(MAKE) -C gperftools/                         clean
 	$(MAKE) -C tlibcrypto/                         clean
 	$(MAKE) -C tkey_exchange/                      clean
 	$(MAKE) -C ukey_exchange/                      clean
 	$(MAKE) -C debugger_interface/linux/           clean
 	$(MAKE) -C sample_libcrypto/                   clean
+	$(MAKE) -C libcapable/linux/                   clean
 	$(MAKE) -C simulation/                         clean
 	$(MAKE) -C sign_tool/SignTool                  clean
 	$(MAKE) -C edger8r/linux                       clean
+	$(MAKE) -C protected_code_loader               clean
+	$(MAKE) -C encrypt_enclave                     clean
+	$(MAKE) -C switchless/                         clean	
 	@$(RM) $(LIBTLIBC) $(LIBTLIBCXX) $(LIBTSE)
 	@$(RM) $(BUILD_DIR)/STLport_Changes_SGX.txt
 	@$(RM) $(BUILD_DIR)/libc++_Changes_SGX.txt

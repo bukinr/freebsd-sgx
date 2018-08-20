@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,6 +44,33 @@
 #include "rts_sim.h"
 #include <assert.h>
 #include <time.h>
+
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/crypto.h>
+
+__attribute__((constructor))
+static void init_openssl(void)
+{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    OpenSSL_add_all_algorithms();
+    ERR_load_crypto_strings();
+#else
+    OPENSSL_init_crypto(0, NULL);
+#endif
+}
+
+__attribute__((destructor))
+static void cleanup_openssl(void)
+{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+    ERR_remove_thread_state(NULL);
+    ERR_free_strings();
+#endif
+}
+
 
 EnclaveCreator* g_enclave_creator = new EnclaveCreatorSim();
 
@@ -214,10 +241,11 @@ int EnclaveCreatorSim::initialize(sgx_enclave_id_t enclave_id)
 
 
     //Since CPUID instruction is NOT supported within enclave, we emuerate the cpu features here and send to tRTS.
-    cpu_sdk_info_t info;
+    system_features_t info;
     info.cpu_features = 0;
-    get_cpu_features(&info.cpu_features);
+    get_cpu_features(&info.cpu_features, (unsigned int*)info.cpuinfo_table);
     info.version = SDK_VERSION_1_5;
+    info.sealed_key = enclave->get_sealed_key();
     status = enclave->ecall(ECMD_INIT_ENCLAVE, NULL, reinterpret_cast<void *>(&info));
     //free the tcs used by initialization;
     enclave->get_thread_pool()->reset();
@@ -237,8 +265,64 @@ bool EnclaveCreatorSim::use_se_hw() const
     return false;
 }
 
-bool EnclaveCreatorSim::get_plat_cap(sgx_misc_attribute_t *se_attr) 
+bool EnclaveCreatorSim::is_EDMM_supported(sgx_enclave_id_t enclave_id)
+{
+    UNUSED(enclave_id);
+    return false;
+}
+
+bool EnclaveCreatorSim::is_driver_compatible()
+{
+    return true;
+}
+
+bool EnclaveCreatorSim::is_in_kernel_driver()
+{
+    return false;
+}
+
+bool EnclaveCreatorSim::get_plat_cap(sgx_misc_attribute_t *se_attr)
 {
     UNUSED(se_attr);
     return false;
+}
+
+int EnclaveCreatorSim::emodpr(uint64_t addr, uint64_t size, uint64_t flag)
+{
+    UNUSED(addr);
+    UNUSED(size);
+    UNUSED(flag);
+
+    return SGX_SUCCESS;
+}
+
+int EnclaveCreatorSim::mktcs(uint64_t tcs_addr)
+{
+    UNUSED(tcs_addr);
+
+    return SGX_SUCCESS;
+}
+
+int EnclaveCreatorSim::trim_range(uint64_t fromaddr, uint64_t toaddr)
+{
+    UNUSED(fromaddr);
+    UNUSED(toaddr);
+
+    return SGX_SUCCESS;
+
+}
+
+int EnclaveCreatorSim::trim_accept(uint64_t addr)
+{
+    UNUSED(addr);
+
+    return SGX_SUCCESS;
+}
+
+int EnclaveCreatorSim::remove_range(uint64_t fromaddr, uint64_t numpages)
+{
+    UNUSED(fromaddr);
+    UNUSED(numpages);
+
+    return SGX_SUCCESS;
 }

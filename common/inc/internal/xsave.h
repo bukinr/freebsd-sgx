@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,11 +46,8 @@
 extern "C" {
 #endif
 
-#include "linux/xsave_gnu.h"
+void init_xsave_info();
 
-/* implemented in urts_xsave.cpp/trts_xsave.cpp */
-void save_and_clean_xfeature_regs(uint8_t *buffer);
-void restore_xfeature_regs(const uint8_t *buffer);
 
 /* trts_xsave.cpp */
 uint64_t get_xfeature_state();

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -90,7 +90,7 @@ else
         App_Compile_CFlags += -DNDEBUG -UEDEBUG -UDEBUG
 endif
 
-App_Compile_CXXFlags := -std=c++0x $(App_Compile_CFlags)
+App_Compile_CXXFlags := -std=c++11 $(App_Compile_CFlags)
 App_Link_Flags := -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread
 
 ifneq ($(SGX_MODE), HW)

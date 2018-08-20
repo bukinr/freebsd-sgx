@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,10 +34,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdlib.h>
-
+#include <errno.h>
 #include <IAERequest.h>
 #include <IAEResponse.h>
-
+#include <se_trace.h>
 #include <UnixCommunicationSocket.h>
 
 
@@ -147,6 +147,10 @@ ssize_t UnixCommunicationSocket::writeRaw(const char* data, ssize_t length)
     do {
         ssize_t step = write(mSocket, data+written, length-written);
 
+        if(step == -1 && errno == EINTR && CheckForTimeout() == false){
+            SE_TRACE_WARNING("write was interrupted by signal\n");
+            continue;
+        }
         if (step < 0 || CheckForTimeout())
         {
             //this connection is probably closed
@@ -174,7 +178,10 @@ char* UnixCommunicationSocket::readRaw(ssize_t length)
 
     do {
         ssize_t step = read(mSocket, recBuf + total_read, length - total_read);
-
+        if(step == -1 && errno == EINTR && CheckForTimeout() == false){
+            SE_TRACE_WARNING("read was interrupted by signal\n");
+            continue;
+        }
         //check connection closed by peer
         if (step <= 0 || CheckForTimeout())
         {

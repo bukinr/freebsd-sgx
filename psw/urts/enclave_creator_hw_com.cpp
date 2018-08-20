@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,8 @@
 #include "prd_css_util.h"
 #include "se_memcpy.h"
 
+#define EDMM_ENABLE_BIT 0x1ULL
+
 bool EnclaveCreatorHW::use_se_hw() const
 {
     return true;
@@ -47,7 +49,8 @@ bool EnclaveCreatorHW::use_se_hw() const
 
 int EnclaveCreatorHW::initialize(sgx_enclave_id_t enclave_id)
 {
-    cpu_sdk_info_t info;
+    system_features_t info;
+    info.system_feature_set[0] = (uint64_t)1 << SYS_FEATURE_MSb;
 
     CEnclave *enclave= CEnclavePool::instance()->get_enclave(enclave_id);
 
@@ -56,8 +59,13 @@ int EnclaveCreatorHW::initialize(sgx_enclave_id_t enclave_id)
 
     //Since CPUID instruction is NOT supported within enclave, we enumerate the cpu features here and send to tRTS.
     info.cpu_features = 0;
-    get_cpu_features(&info.cpu_features);
-    info.version = SDK_VERSION_1_5;
+    memset(info.cpuinfo_table, 0, sizeof(info.cpuinfo_table));
+    get_cpu_features(&info.cpu_features, (uint32_t*)info.cpuinfo_table);
+    info.version = (sdk_version_t)MIN((uint32_t)SDK_VERSION_2_2, enclave->get_enclave_version());
+    info.sealed_key = enclave->get_sealed_key();
+    if (is_EDMM_supported(enclave_id))
+            info.system_feature_set[0] |= EDMM_ENABLE_BIT;
+
 
     int status = enclave->ecall(ECMD_INIT_ENCLAVE, NULL, reinterpret_cast<void *>(&info));
     //free the tcs used by initialization;

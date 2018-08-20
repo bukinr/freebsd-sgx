@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,6 +35,22 @@ include Makefile.opt_lib
 else
 include Makefile.source
 endif
+
+# SDK requires prebuilt IPP libraries.
+CHECK_OPT :=
+ifeq ("$(wildcard $(LINUX_EXTERNAL_DIR)/ippcp_internal/inc)", "")
+CHECK_OPT := opt_check_failed
+endif
+
+.PHONY: opt_check_failed
+opt_check_failed:
+	@echo "ERROR: Please run 'download_prebuilt.sh' to download the prebuilt optimized libraries before compiling."
+	@echo "Exiting......"
+	@exit -2
+
+.PHONY: all
+all: $(CHECK_OPT)
+	$(MAKE) components
 
 .PHONY: rebuild
 rebuild: 

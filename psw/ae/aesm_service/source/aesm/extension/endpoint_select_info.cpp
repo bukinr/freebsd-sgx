@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,8 +36,6 @@
 #include "network_encoding_wrapper.h"
 #include "ipp_wrapper.h"
 #include "sgx_tcrypto.h"
-#include "ippcp.h"
-#include "ippcore.h"
 #include "aesm_xegd_blob.h"
 #include "peksk_pub.hh"
 #include "sgx_read_rand.h"
@@ -190,8 +188,8 @@ IppStatus get_provision_server_rsa_pub_key_in_ipp_format(const signed_pek_t& pek
 //@param xid: The transaction id (XID) of the ES Protocol
 //@return AE_SUCCESS if signature verification success and passed
 //@return PVE_MSG_ERROR if signature verification failed or message error
-//other kinds of error code could be returned too due to corresponding error situation 
-ae_error_t EndpointSelectionInfo::verify_signature(const endpoint_selection_infos_t& es_info, uint8_t xid[XID_SIZE], uint8_t rsa_signature[PVE_RSA_KEY_BYTES], uint16_t provision_ttl)
+//other kinds of error code could be returned too due to corresponding error situation
+ae_error_t EndpointSelectionInfo::verify_signature(const endpoint_selection_infos_t& es_info, uint8_t xid[XID_SIZE], uint8_t rsa_signature[RSA_3072_KEY_BYTES], uint16_t provision_ttl)
 {
     //Do signature verification here
     ae_error_t ae_err = AE_SUCCESS;
@@ -259,7 +257,7 @@ ae_error_t EndpointSelectionInfo::verify_signature(const endpoint_selection_info
     }
 ret_point:
     if(NULL != rsa_pub_key){
-        secure_free_rsa_pub_key(PVE_RSA_KEY_BYTES, sizeof(uint32_t), rsa_pub_key);
+        secure_free_rsa_pub_key(RSA_3072_KEY_BYTES, sizeof(uint32_t), rsa_pub_key);
     }
     if(NULL != buffer){
         free(buffer);
@@ -280,7 +278,7 @@ ae_error_t EndpointSelectionInfo::start_protocol(endpoint_selection_infos_t& es_
     uint32_t resp_size = 0;
     uint16_t provision_ttl = 0;
     uint8_t *msg = NULL;
-    uint8_t rsa_signature[PVE_RSA_KEY_BYTES];
+    uint8_t rsa_signature[RSA_3072_KEY_BYTES];
     gen_endpoint_selection_output_t enclave_output;
     ae_error_t ae_ret = AE_SUCCESS;
     uint32_t enclave_lost_count = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 
     .file "lowlib.S"
 
-    .text
+.section .nipx,"ax",@progbits
 
 DECLARE_LOCAL_FUNC get_bp
     mov %xbp, %xax
@@ -59,7 +59,6 @@ DECLARE_LOCAL_FUNC load_regs
     mov	reg_xdi(%xdx), %xdi
     mov	reg_xbp(%xdx), %xbp
     mov	reg_xsp(%xdx), %xsp
-    mov	reg_xax(%xdx), %xax
     push reg_xip(%xdx)
     mov reg_xdx(%xdx), %xdx
     ret

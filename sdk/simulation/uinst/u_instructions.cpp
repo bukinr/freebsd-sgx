@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,8 +50,7 @@
 #include "enclave_mngr.h"
 #include "u_instructions.h"
 
-#include "ippcp.h"
-
+#include "crypto_wrapper.h"
 
 static uintptr_t _EINIT(secs_t* secs, enclave_css_t* css, token_t* launch);
 static uintptr_t _ECREATE (page_info_t* pi);
@@ -105,8 +104,19 @@ uintptr_t _EINIT(secs_t* secs, enclave_css_t *css, token_t *launch)
         mcp_same_size(&this_secs->mr_enclave, &css->body.enclave_hash, sizeof(sgx_measurement_t));
         this_secs->isv_prod_id = css->body.isv_prod_id;
         this_secs->isv_svn = css->body.isv_svn;
+        
+        uint8_t signer[SGX_HASH_SIZE] = {0};
+        unsigned int signer_len = SGX_HASH_SIZE;
+        sgx_status_t ret = sgx_EVP_Digest(EVP_sha256(), css->key.modulus, SE_KEY_SIZE, signer, &signer_len);
+        if(ret != SGX_SUCCESS)
+        {
+            if(ret != SGX_ERROR_OUT_OF_MEMORY)
+                ret = SGX_ERROR_UNEXPECTED;
+            return ret;
+        }
+        assert(signer_len == SGX_HASH_SIZE);
 
-        ippsHashMessage(css->key.modulus, SE_KEY_SIZE, (Ipp8u*)&this_secs->mr_signer, IPP_ALG_HASH_SHA256);
+        mcp_same_size(&this_secs->mr_signer, signer, SGX_HASH_SIZE);
     }
 
     // Check launch token
@@ -198,7 +208,8 @@ uintptr_t _EREMOVE(const void *epc_lin_addr)
 
 // Master entry functions
 
-
+// The call to load_regs assumes the existence of a frame pointer.
+LOAD_REGS_ATTRIBUTES
 void _SE3(uintptr_t xax, uintptr_t xbx,
           uintptr_t xcx, uintptr_t xdx,
           uintptr_t xsi, uintptr_t xdi)

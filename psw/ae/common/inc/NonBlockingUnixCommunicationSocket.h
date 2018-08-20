@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +44,7 @@ public:
     ~NonBlockingUnixCommunicationSocket();
 
     bool  init();
-    char* readRaw(ssize_t length); //throw(SockDisconnectedException) = 0;
+    char* readRaw(ssize_t length);
     ssize_t  writeRaw(const char* data, ssize_t length);
     int   getSockDescriptor();
     bool wasTimeoutDetected();

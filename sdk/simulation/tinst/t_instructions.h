@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@ extern "C" {
 extern SE_DECLSPEC_EXPORT global_data_sim_t g_global_data_sim;
 
 uintptr_t _SE3(uintptr_t xax, uintptr_t xbx, uintptr_t xcx,
-               uintptr_t xdx, uintptr_t xsi, uintptr_t xdi);
+               uintptr_t xdx, uintptr_t xsi, uintptr_t xdi)  __attribute__((section(".nipx")));
 
 #ifdef __cplusplus
 }

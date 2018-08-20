@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -39,7 +39,7 @@ CXXFLAGS += $(ENCLAVE_CXXFLAGS) \
             -fno-exceptions \
             -fno-rtti
 
-TCXXFLAGS := $(filter-out -fstack-protector-strong, $(CXXFLAGS))
+TCXXFLAGS := $(patsubst -fstack-protector%,-fno-stack-protector,$(CXXFLAGS))
 
 OBJS1 := init_enclave.o  \
         trts.o           \
@@ -48,8 +48,12 @@ OBJS1 := init_enclave.o  \
         trts_util.o      \
         trts_veh.o       \
         trts_xsave.o     \
+        trts_switchless.o    \
         init_optimized_lib.o \
-        trts_version.o
+        trts_version.o \
+        trts_trim.o \
+        trts_emodpr.o  \
+        trts_add_trim.o
 
 OBJS2 := trts_nsp.o
 

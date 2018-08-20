@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +33,7 @@
 
 
 #include "sgx_tseal.h"
+#include "sgx_lfence.h"
 #include "tSeal_internal.h"
 #include "sgx_utils.h"
 #include <string.h>
@@ -137,6 +138,15 @@ sgx_status_t sgx_unseal_data_helper(const sgx_sealed_data_t *p_sealed_data, uint
         // Return error indicating the blob is corrupted
         return SGX_ERROR_MAC_MISMATCH;
     }
+
+    //
+    // code that calls sgx_unseal_data commonly does some sanity checks
+    // related to plain_text_offset.  We add fence here since we don't 
+    // know what crypto code does and if plain_text_offset-related 
+    // checks mispredict the crypto code could operate on unintended data
+    //
+    sgx_lfence();
+
     err = sgx_rijndael128GCM_decrypt(&seal_key, const_cast<uint8_t *>(p_sealed_data->aes_data.payload),
         decrypted_text_length, p_decrypted_text, &payload_iv[0], SGX_SEAL_IV_SIZE,
         const_cast<uint8_t *>(&(p_sealed_data->aes_data.payload[decrypted_text_length])), additional_MACtext_length,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,8 +49,8 @@ class SocketTransporter : public ITransporter{
 
         uae_oal_status_t transact(IAERequest* request, IAEResponse* response, uint32_t timeout = 0);
 
-        IAERequest* receiveRequest(ICommunicationSocket* sock);// throw(SockDisconnectedException);
-        uae_oal_status_t sendResponse(IAEResponse* response, ICommunicationSocket* sock);
+        IAERequest* receiveRequest(ICommunicationSocket* sock);
+        void sendResponse(IAEResponse* response, ICommunicationSocket* sock);
 
     protected:
         ISocketFactory*         mSocketFactory;
@@ -58,7 +58,7 @@ class SocketTransporter : public ITransporter{
 
     private:
         uae_oal_status_t sendMessage(AEMessage *message, ICommunicationSocket* sock);
-        AEMessage* receiveMessage(ICommunicationSocket* sock);// throw(SockDisconnectedException);
+        AEMessage* receiveMessage(ICommunicationSocket* sock);
         SocketTransporter& operator=(const SocketTransporter&);
         SocketTransporter(const SocketTransporter&);
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,10 +30,16 @@
  */
 
 /* ECALL command */
-#define ECMD_ECALL         0
-#define ECMD_INIT_ENCLAVE -1
-#define ECMD_ORET         -2
-#define ECMD_EXCEPT       -3
+#define ECMD_ECALL           0
+#define ECMD_INIT_ENCLAVE   -1
+#define ECMD_ORET           -2
+#define ECMD_EXCEPT         -3
+#define ECMD_MKTCS          -4
+#define ECMD_UNINIT_ENCLAVE -5
+
+/* Built-in ECall command for Switchless SGX */
+#define ECMD_INIT_SWITCHLESS         (-6)
+#define ECMD_RUN_SWITCHLESS_TWORKER  (-7)
 
 /* OCALL command */
 #define OCMD_ERET         -1

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,10 +54,7 @@
 #include "interface_psda.h"
 
 #define PSDA_CAP_PRTC               0x1
-#define PSDA_CAP_PROTECTED_OUTPUT   0x4
 #define PSDA_CAP_RPDATA             0x8
-
-#define PS_CAP_PROTECTED_OUTPUT     0x4
 
 #define CHECK_ECALL_RET(status,ret)            \
             if((status) == SGX_ERROR_ENCLAVE_LOST)  \
@@ -91,44 +88,35 @@ ae_error_t CPSEClass::init_ps(void)
     //Logic here is that ME FW mode is used(Emulator is not running)
     //provisioning is attempted using iclsclient and the return code is not verified
     //In case of emulator the emulator provisioning tool is used to provision for epid 1.1 and if not long term pairing will return not provisioned error.
+
+    // Always call upse_iclsInit because TCB recovery may occur
+    // Ignore the return value because the ME may still be working
+    uint32_t status_provision = upse_iclsInit();
+    if (status_provision != 0)
+    {
+        // Provisioning failed , maybe caused by missing of iCls client, etc.
+        AESM_LOG_INFO_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_START]);
+        // This is logged as a WARNING here, since the system may not require PS capability
+        AESM_LOG_WARN_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_FAIL_DAL]);
+    }
+
     pse_pr_interface_psda* pPSDA = new(std::nothrow) pse_pr_interface_psda();
     if (pPSDA == NULL) {
         return AE_OUT_OF_MEMORY_ERROR;
     }
-    // Probe CSME provisiong status first by calling get_csme_gid()
+    // Will fail if CSME is not provisioned
     ae_error_t ret = pPSDA->get_csme_gid(&PSDAService::instance().csme_gid);
-    if (ret != AE_SUCCESS)
-    {
-        // As long as get_csme_gid fails, call iclsInit to trigger provisioning
-        uint32_t status_provision = upse_iclsInit();
-        if (status_provision != 0)
-        {
-            // Provisioning failed , maybe caused by missing of iCls client, etc.
-            AESM_LOG_INFO_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_START]);
-            // This is logged as a WARNING here, since the system may not require PS capability
-            AESM_LOG_WARN_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_FAIL_DAL]);
-            delete pPSDA;
-            pPSDA = NULL;
-            return AESM_PSE_PR_PSDA_PROVISION_ERROR;
-        }
-        else
-        {
-            // try to get CSME GID again
-            ret = pPSDA->get_csme_gid(&PSDAService::instance().csme_gid);
-            if (ret != AE_SUCCESS)
-            {
-                // Failed to get CSME GID
-                AESM_LOG_INFO_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_START]);
-                // This is logged as a WARNING here, since the system may not require PS capability
-                AESM_LOG_WARN_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_FAIL_DAL]);
-                delete pPSDA;
-                pPSDA = NULL;
-                return ret;
-            }
-        }
-    }
     delete pPSDA;
     pPSDA = NULL;
+
+    if (ret != AE_SUCCESS)
+    {
+        // Failed to get CSME GID
+        AESM_LOG_INFO_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_START]);
+        // This is logged as a WARNING here, since the system may not require PS capability
+        AESM_LOG_WARN_ADMIN("%s", g_admin_event_string_table[SGX_ADMIN_EVENT_PS_INIT_FAIL_DAL]);
+        return ret;
+    }
 
     // Set state to PROVISIONED
     m_status = PSE_STATUS_CSE_PROVISIONED;
@@ -378,8 +366,6 @@ ae_error_t CPSEClass::get_ps_cap(uint64_t* ps_cap)
     uint32_t psda_cap0 = _ntohl(psda_cap_result_msg.cap_descriptor0);
     if (psda_cap0 & PSDA_CAP_PRTC)
         m_ps_cap |= PS_CAP_TRUSTED_TIME;        // Trusted time service
-    if (psda_cap0 & PSDA_CAP_PROTECTED_OUTPUT)
-        m_ps_cap |= PS_CAP_PROTECTED_OUTPUT;        // Trusted display key exchange
     if (psda_cap0 & PSDA_CAP_RPDATA)        // RPDATA capbility is available
         m_ps_cap |= PS_CAP_MONOTONIC_COUNTER;        // Monotonic counter service
 

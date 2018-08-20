@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,7 +32,8 @@
 TOP_DIR  = ../../..
 include $(TOP_DIR)/buildenv.mk
 
-INCLUDE += -I$(COMMON_DIR)/inc/internal \
+INCLUDE += -I. \
+           -I$(COMMON_DIR)/inc/internal \
            -I$(COMMON_DIR)/inc
 
 CXXFLAGS += -fPIC -fno-rtti -Werror $(INCLUDE)
@@ -49,14 +50,17 @@ LIBNAME := libsgx_uprotected_fs.a
 all: $(LIBNAME) | $(BUILD_DIR)
 	$(CP) $< $|
 
-$(LIBNAME): sgx_tprotected_fs_u.h $(OBJ)
-	$(AR) rcsD $@ $^
+$(LIBNAME): $(OBJ)
+	$(AR) rcsD $@ $(OBJ)
 	
 sgx_tprotected_fs_u.h: $(EDGER8R)
 	$(EDGER8R) --header-only --untrusted $(COMMON_DIR)/inc/sgx_tprotected_fs.edl --search-path $(COMMON_DIR)/inc
 
 $(EDGER8R):
 	$(MAKE) -C $(EDGER8R_DIR)
+
+$(OBJ): %.o :%.cpp sgx_tprotected_fs_u.h
+	$(CXX) $(CXXFLAGS) $(INCLUDE)  -c $< -o $@
 
 $(BUILD_DIR):
 	@$(MKDIR) $@

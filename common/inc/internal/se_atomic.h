@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +31,8 @@
 
 #ifndef _SE_ATOMIC_H_
 #define _SE_ATOMIC_H_
+
+#include <stdint.h>
 
 
 inline uint32_t se_atomic_inc(volatile uint32_t *mem)

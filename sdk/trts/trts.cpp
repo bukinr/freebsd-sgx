@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,12 +37,13 @@
 #include "util.h"
 #include "thread_data.h"
 #include "global_data.h"
-
+#include "trts_internal.h"
 #include "internal/rts.h"
 
 #ifdef SE_SIM
 #include "t_instructions.h"    /* for `g_global_data_sim' */
 #include "sgx_spinlock.h"
+#include "se_cpu_feature.h"
 #endif
 
 
@@ -50,7 +51,6 @@
 #ifndef SE_SIM
 
 #include "se_cdefs.h"
-
 // add a version to trts
 SGX_ACCESS_VERSION(trts, 1);
 
@@ -186,14 +186,19 @@ void * sgx_ocalloc(size_t size)
     // so use volatile to avoid optimization by the compiler
     for(volatile size_t page = first_page; page >= last_page; page -= SE_PAGE_SIZE)
     {
+        // OS may refuse to commit a physical page if the page fault address is smaller than RSP
+        // So update the outside stack address before probe the page
+        ssa_gpr->REG(sp_u) = page;
+
         *reinterpret_cast<uint8_t *>(page) = 0;
     }
 
-    // update the outside stack address in the SSA
+    // update the outside stack address in the SSA to the allocated address
     ssa_gpr->REG(sp_u) = addr;
 
     return reinterpret_cast<void *>(addr);
 }
+weak_alias(sgx_ocalloc, sgx_ocalloc_switchless);
 
 // sgx_ocfree()
 // Parameters:
@@ -221,6 +226,7 @@ void sgx_ocfree()
     }
     ssa_gpr->REG(sp_u) = usp;
 }
+weak_alias(sgx_ocfree, sgx_ocfree_switchless);
 
 #ifdef SE_SIM
 static sgx_spinlock_t g_seed_lock = SGX_SPINLOCK_INITIALIZER;
@@ -248,8 +254,17 @@ static sgx_status_t  __do_get_rand32(uint32_t* rand_num)
     if(0 == do_rdrand(rand_num))
         return SGX_ERROR_UNEXPECTED;
 #else
-    /*  use LCG in simulation mode */
-    *rand_num = get_rand_lcg();
+    /* For simulation mode, if the CPU supports RDRAND, use RDRAND. Otherwise, use LCG*/
+    if(TEST_CPU_HAS_RDRAND)
+    {
+        if(0 == do_rdrand(rand_num))
+            return SGX_ERROR_UNEXPECTED;
+    }
+    else
+    {
+        /*  use LCG in simulation mode */
+        *rand_num = get_rand_lcg();
+    }
 #endif
     return SGX_SUCCESS;
 }
@@ -287,37 +302,19 @@ sgx_status_t sgx_read_rand(unsigned char *rand, size_t length_in_bytes)
     return SGX_SUCCESS;
 }
 
-#include "trts_internal.h"
-extern "C" int enter_enclave(int index, void *ms, void *tcs, int cssa)
+int sgx_is_enclave_crashed()
 {
-    if(get_enclave_state() == ENCLAVE_CRASHED)
-    {
-        return SGX_ERROR_ENCLAVE_CRASHED;
-    }
-
-    sgx_status_t error = SGX_ERROR_UNEXPECTED;
-    if(cssa == 0)
-    {
-        if(index >= 0)
-        {
-            error = do_ecall(index, ms, tcs);
-        }
-        else if(index == ECMD_INIT_ENCLAVE)
-        {
-            error = do_init_enclave(ms);
-        }
-        else if(index == ECMD_ORET)
-        {
-            error = do_oret(ms);
-        }
-    }
-    else if((cssa == 1) && (index == ECMD_EXCEPT))
-    {
-        error = trts_handle_exception(tcs);
-    }
-    if(error == SGX_ERROR_UNEXPECTED)
-    {
-        set_enclave_state(ENCLAVE_CRASHED);
-    }
-    return error;
+    return get_enclave_state() == ENCLAVE_CRASHED;
 }
+
+extern uintptr_t __stack_chk_guard;
+int check_static_stack_canary(void *tcs)
+{
+    size_t *canary = TCS2CANARY(tcs);
+    if ( *canary != (size_t)__stack_chk_guard)
+    {
+        return -1;
+    }
+    return 0;
+}
+

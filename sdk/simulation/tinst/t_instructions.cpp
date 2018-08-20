@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -284,6 +284,11 @@ static void _EREPORT(const sgx_target_info_t* ti, const sgx_report_data_t* rd, s
 
 
 static void
+_EEXIT(uintptr_t dest, uintptr_t xcx, uintptr_t xdx, uintptr_t xsi, uintptr_t xdi) __attribute__((section(".nipx")));
+
+// The call to load_regs assumes the existence of a frame pointer.
+LOAD_REGS_ATTRIBUTES
+static void
 _EEXIT(uintptr_t dest, uintptr_t xcx, uintptr_t xdx, uintptr_t xsi, uintptr_t xdi)
 {
     // By simulator convention, XDX contains XBP and XCX contains XSP.
@@ -320,9 +325,6 @@ _EEXIT(uintptr_t dest, uintptr_t xcx, uintptr_t xdx, uintptr_t xsi, uintptr_t xd
 
 // Master entry functions
 
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-
 uintptr_t _SE3(uintptr_t xax, uintptr_t xbx, uintptr_t xcx,
                uintptr_t xdx, uintptr_t xsi, uintptr_t xdi)
 {
@@ -347,5 +349,3 @@ uintptr_t _SE3(uintptr_t xax, uintptr_t xbx, uintptr_t xcx,
     GP();
     return (uintptr_t)-1;
 }
-
-#pragma GCC pop_options

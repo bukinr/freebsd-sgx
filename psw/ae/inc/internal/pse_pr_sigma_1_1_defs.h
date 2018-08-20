@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -171,6 +171,6 @@ typedef struct _SIGMA_S3_MESSAGE
 #pragma pack()
 
 // This is the constant size portion of the S2 message that is part of the ICV
-#define SIGMA_S2_ICV_CONSTANT_BUFFER_SIZE sizeof(EphemeralPublicKey) + sizeof(SIGMA_BASENAME) + sizeof(OCSP_REQ)
+#define SIGMA_S2_ICV_CONSTANT_BUFFER_SIZE (sizeof(EphemeralPublicKey) + sizeof(SIGMA_BASENAME) + sizeof(OCSP_REQ))
 
 #endif

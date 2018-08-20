@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
 TOP_DIR  = ../../..
 include $(TOP_DIR)/buildenv.mk
 
-INCLUDE += -I$(COMMON_DIR)/inc/tlibc    \
+INCLUDE += -I. \
+           -I$(COMMON_DIR)/inc/tlibc    \
            -I$(COMMON_DIR)/inc/internal \
            -I$(COMMON_DIR)/inc
 
 INCLUDE += -I$(LINUX_SDK_DIR)/tlibcxx/include
 
-
-CXXFLAGS += $(ENCLAVE_CXXFLAGS) -U__STRICT_ANSI__ -Werror 
+CXXFLAGS += $(ENCLAVE_CXXFLAGS) -U__STRICT_ANSI__ -Werror
 #CXXFLAGS += -Wno-unused-local-typedefs -Wno-shadow -Wno-missing-field-initializers -Wno-unused-parameter
 
 SRC := $(wildcard *.cpp)
@@ -54,8 +54,8 @@ LIBNAME := libsgx_tprotected_fs.a
 all: $(LIBNAME) | $(BUILD_DIR)
 	@$(CP) $< $|
 
-$(LIBNAME): sgx_tprotected_fs_t.h $(OBJ)
-	$(AR) rcsD $@ $^
+$(LIBNAME): $(OBJ)
+	$(AR) rcsD $@ $(OBJ)
 	
 sgx_tprotected_fs_t.h: $(EDGER8R)
 	$(EDGER8R) --header-only --trusted $(COMMON_DIR)/inc/sgx_tprotected_fs.edl --search-path $(COMMON_DIR)/inc
@@ -63,7 +63,7 @@ sgx_tprotected_fs_t.h: $(EDGER8R)
 $(EDGER8R):
 	$(MAKE) -C $(EDGER8R_DIR)
 
-$(OBJ): %.o :%.cpp
+$(OBJ): %.o :%.cpp sgx_tprotected_fs_t.h
 	$(CXX) $(CXXFLAGS) $(INCLUDE)  -c $< -o $@
 
 $(BUILD_DIR):

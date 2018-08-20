@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -86,8 +86,10 @@ libunwind:
 
 .PHONY: clean
 clean:
-	@-$(MAKE) -C linux/libunwind distclean
 	@$(RM) $(OBJS) $(CPPRT)
+ifeq ("$(shell test -f linux/libunwind/Makefile && echo Makefile exists)", "Makefile exists")	
+	@-$(MAKE) -C linux/libunwind distclean
+endif
 	@$(RM) -r linux/libunwind/INSTALL             \
               linux/libunwind/Makefile.in         \
               linux/libunwind/aclocal.m4          \

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +33,7 @@
 #include "pce_t.c"
 #include "aeerror.h"
 #include "sgx_utils.h"
+#include "sgx_lfence.h"
 #include "ipp_wrapper.h"
 #include "byte_order.h"
 #include "pve_qe_common.h"
@@ -43,7 +44,7 @@ ae_error_t get_ppid(ppid_t* ppid);
 ae_error_t get_pce_priv_key(const psvn_t* psvn, sgx_ec256_private_t* wrap_key);
 #define PCE_RSA_SEED_SIZE 32
 
-#define RSA_MOD_SIZE 256 //hardcode n size to be 256
+#define RSA_MOD_SIZE 384 //hardcode n size to be 384
 #define RSA_E_SIZE 4 //hardcode e size to be 4
 
 se_static_assert(RSA_MOD_SIZE == PEK_MOD_SIZE);
@@ -82,7 +83,7 @@ uint32_t get_pc_info(const sgx_report_t* report,
         signature_scheme == NULL){
             return AE_INVALID_PARAMETER;
     }
-    if(ALG_RSA_OAEP_2048!=crypto_suite){//The only crypto suite supported in RSA 2048 where 256 bytes module n is used
+    if(ALG_RSA_OAEP_3072!=crypto_suite){//The only crypto suite supported in RSA 3072 where 384 bytes module n is used
         return AE_INVALID_PARAMETER;
     }
 
@@ -92,6 +93,12 @@ uint32_t get_pc_info(const sgx_report_t* report,
         return AE_INVALID_PARAMETER;
     }
 
+	//
+	// if this mispredicts, we might go past end of 
+	// public_key below
+	//
+    sgx_lfence();
+
     *encrypted_ppid_out_size = RSA_MOD_SIZE;//output size is same as public key module size
     if (encrypted_ppid_buf_size < RSA_MOD_SIZE){
         return AE_INSUFFICIENT_DATA_IN_BUFFER;
@@ -99,8 +106,7 @@ uint32_t get_pc_info(const sgx_report_t* report,
     if(SGX_SUCCESS != sgx_verify_report(report)){
         return PCE_INVALID_REPORT;
     }
-    if((report->body.attributes.flags & SGX_FLAGS_PROVISION_KEY) != SGX_FLAGS_PROVISION_KEY ||
-        (report->body.attributes.flags & SGX_FLAGS_DEBUG) != 0){
+    if((report->body.attributes.flags & SGX_FLAGS_PROVISION_KEY) != SGX_FLAGS_PROVISION_KEY){
         return PCE_INVALID_PRIVILEGE;
     }
     uint8_t hash_buf[SGX_REPORT_DATA_SIZE];//hash value only use 32 bytes but data in report has 64 bytes size
@@ -164,7 +170,7 @@ uint32_t get_pc_info(const sgx_report_t* report,
     }
 
     ipp_ret = create_rsa_pub_key(RSA_MOD_SIZE, RSA_E_SIZE,
-        reinterpret_cast<const Ipp32u *>(le_n), 
+        reinterpret_cast<const Ipp32u *>(le_n),
         &little_endian_e,
         &pub_key);
     free(le_n);
@@ -185,13 +191,13 @@ uint32_t get_pc_info(const sgx_report_t* report,
         ae_ret = AE_READ_RAND_ERROR;
         goto RETURN_POINT;
     }
-    
+
     pub_key_buffer = (uint8_t *)malloc(pub_key_size);
     if (pub_key_buffer == NULL){
         ae_ret = AE_OUT_OF_MEMORY_ERROR;
         goto RETURN_POINT;
     }
-    ipp_ret = ippsRSAEncrypt_OAEP(reinterpret_cast<const Ipp8u *>(&ppid_buf), sizeof(ppid_buf), NULL, 0, seeds, 
+    ipp_ret = ippsRSAEncrypt_OAEP(reinterpret_cast<const Ipp8u *>(&ppid_buf), sizeof(ppid_buf), NULL, 0, seeds,
         encrypted_ppid, pub_key, IPP_ALG_HASH_SHA256, pub_key_buffer);
     if (ipp_ret != ippStsNoErr){
         ae_ret = AE_FAILURE;
@@ -244,8 +250,7 @@ uint32_t certify_enclave(const psvn_t* cert_psvn,
         return PCE_INVALID_REPORT;
     }
     //only PvE could use the interface which has flag SGX_FLAGS_PROVISION_KEY
-    if((report->body.attributes.flags & SGX_FLAGS_PROVISION_KEY) != SGX_FLAGS_PROVISION_KEY ||
-        (report->body.attributes.flags & SGX_FLAGS_DEBUG) != 0){
+    if((report->body.attributes.flags & SGX_FLAGS_PROVISION_KEY) != SGX_FLAGS_PROVISION_KEY){
         return PCE_INVALID_PRIVILEGE;
     }
     ae_ret = get_pce_priv_key(cert_psvn, &ec_prv_key);

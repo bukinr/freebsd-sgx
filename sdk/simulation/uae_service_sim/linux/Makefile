@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -38,8 +38,7 @@ INCLUDES := -I..                                            \
             -I$(LINUX_SDK_DIR)/tseal                        \
             -I$(LINUX_SDK_DIR)/simulation/tinst             \
             -I$(LINUX_SDK_DIR)/simulation/urtssim           \
-            -I$(SGX_IPP_INC)                                \
-            -I$(LINUX_EXTERNAL_DIR)/epid                    \
+            -I$(LINUX_EXTERNAL_DIR)/epid-sdk                \
             -I$(LINUX_EXTERNAL_DIR)/rdrand/                 \
             -I$(LINUX_PSW_DIR)/ae/inc     \
             -I$(LINUX_PSW_DIR)/ae/inc/internal \
@@ -49,14 +48,14 @@ CXXFLAGS += -Wall -fPIC $(INCLUDES) -g
 CFLAGS := $(filter-out -fPIC, $(CFLAGS)) -Wall $(INCLUDES)
 
 VERSION_SCRIPT = $(shell pwd)/uae_service_sim.linux.version
-LD_OPT_WITHVER = -Wl,--version-script=$(VERSION_SCRIPT)
+LD_OPT = $(COMMON_LDFLAGS) -Wl,--version-script=$(VERSION_SCRIPT)
 
 RDRAND_LIBDIR := $(LINUX_EXTERNAL_DIR)/rdrand/src
 RDRAND_MAKEFILE := $(RDRAND_LIBDIR)/Makefile
 
-EXTERNAL_LIB += -L$(IPP_LIBS_DIR) $(LD_IPP)
 EXTERNAL_LIB += -L$(RDRAND_LIBDIR) -lrdrand
 EXTERNAL_LIB += -L$(RDRAND_LIBDIR) -lrt
+EXTERNAL_LIB += -lcrypto
 
 vpath %.cpp $(LINUX_PSW_DIR)/ae/common \
             $(LINUX_SDK_DIR)/simulation/urtssim \
@@ -64,7 +63,8 @@ vpath %.cpp $(LINUX_PSW_DIR)/ae/common \
 
 vpath %.c   $(COMMON_DIR)/src
 
-CPP_SRC := $(wildcard *.cpp ../*.cpp) se_sig_rl.cpp cpusvn_util.cpp sgx_read_rand.cpp
+CPP_SRC := $(wildcard *.cpp ../*.cpp) se_sig_rl.cpp cpusvn_util.cpp sgx_read_rand.cpp 
+CPP_SRC += crypto_evp_digest.cpp crypto_cmac_128.cpp
 C_SRC   := se_trace.c se_thread.c
 
 OBJ := $(sort $(CPP_SRC:.cpp=.o)) \
@@ -82,16 +82,8 @@ ifndef DEBUG
 	$(CP) $(DLLNAME_DEBUG) $|
 endif
 
-ifneq ($(USE_OPT_LIBS), 0)
 $(DLLNAME): $(OBJ) -lrdrand
-	$(CXX) $(CXXFLAGS) $(OBJ) -shared $(EXTERNAL_LIB) -o $@ $(LD_OPT_WITHVER)
-else
--lcrypto_px:
-	$(MAKE) -C $(IPP_LIBS_DIR)
-
-$(DLLNAME): $(OBJ) -lrdrand -lcrypto_px
-	$(CXX) $(CXXFLAGS) $(OBJ) -shared $(EXTERNAL_LIB) -o $@ $(LD_OPT_WITHVER)
-endif
+	$(CXX) $(CXXFLAGS) $(OBJ) -shared $(EXTERNAL_LIB) -o $@ $(LD_OPT)
 
 $(DLLNAME_DEBUG): $(DLLNAME)
 ifndef DEBUG
@@ -131,9 +123,6 @@ clean:
 	@$(RM) $(DLLNAME) $(BUILD_DIR)/$(DLLNAME)
 	@$(RM) $(DLLNAME_DEBUG) $(BUILD_DIR)/$(DLLNAME_DEBUG)
 	@$(RM) $(LIBUAE_SERVICE_DEPLOY) $(BUILD_DIR)/$(LIBUAE_SERVICE_DEPLOY)
-ifeq ($(USE_OPT_LIBS), 0)
-	@$(MAKE) -C $(IPP_LIBS_DIR) clean
-endif
 ifeq ($(RDRAND_MAKEFILE), $(wildcard $(RDRAND_MAKEFILE)))
 	@$(MAKE) distclean -C $(RDRAND_LIBDIR)
 endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,16 @@
 #include "protocol.h"
 #include "cipher.h"
 #include "sgx_tcrypto.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "epid/member/software_member.h"
+#include "epid/member/src/write_precomp.h"
+#include "epid/member/src/signbasic.h"
+#include "epid/member/src/nrprove.h"
+#ifdef __cplusplus
+}
+#endif
 #include "epid/common/errors.h"
 #include "epid/member/api.h"
 #include "pve_hardcoded_tlv_data.h"
@@ -118,10 +128,7 @@ static pve_status_t gen_epid_blob(const extended_epid_group_blob_t* pxegb,
     se_secret_epid_data_sdk_t *epid_data = NULL;
     se_plaintext_epid_data_sdk_t *plaintext = NULL;
     uint32_t tmp_buffer_size = static_cast<uint32_t>(sizeof(se_plaintext_epid_data_sdk_t) + sizeof(se_secret_epid_data_sdk_t));
-    if(!EpidIsPrivKeyInGroup(pub_key, prv_key)){
-        ret = PVEC_MSG_ERROR;
-        goto ret_point;
-    }
+
     //alloc one temp buffer to hold both plaintext and secret data before encryption
     //all data before encryption will be copied into the buffer inorder
     tmp_buffer = reinterpret_cast<uint8_t *>(malloc(tmp_buffer_size));
@@ -145,22 +152,34 @@ static pve_status_t gen_epid_blob(const extended_epid_group_blob_t* pxegb,
     memcpy(&plaintext->qsdk_mod, pxegb->qsdk_mod, sizeof(plaintext->qsdk_mod));
     memcpy(&plaintext->epid_sk, pxegb->epid_sk, sizeof(plaintext->epid_sk));
     memcpy(&epid_data->epid_private_key,prv_key,sizeof(PrivKey)); //EPID Private key is sealed in EPID_DATA_BLOB together with Member Precomputation
-    epid_ret = EpidMemberCreate(&(plaintext->epid_group_cert),
-            (PrivKey*)&(epid_data->epid_private_key),
-            NULL,
-            epid_random_func,
-            NULL,
-            &p_epid_context);
+
+    epid_ret = epid_member_create(epid_random_func, NULL, NULL, &p_epid_context);
     if(kEpidNoErr!=epid_ret){
         ret = epid_error_to_pve_error(epid_ret);
         goto ret_point;
     }
+
+    epid_ret = EpidProvisionKey(p_epid_context,
+        &(plaintext->epid_group_cert),
+        (PrivKey*)&(epid_data->epid_private_key),
+        NULL);
+    if (kEpidNoErr != epid_ret) {
+        ret = epid_error_to_pve_error(epid_ret);
+        goto ret_point;
+    }
+
+    // start member
+    epid_ret = EpidMemberStartup(p_epid_context);
+    if (kEpidNoErr != epid_ret) {
+        ret = epid_error_to_pve_error(epid_ret);
+        goto ret_point;
+    }
+
     epid_ret = EpidMemberWritePrecomp(p_epid_context, &epid_data->member_precomp_data);//Create Member Precomputation
     if(kEpidNoErr!=epid_ret){
         ret = epid_error_to_pve_error(epid_ret);
         goto ret_point;
     }
-    EpidMemberDelete(&p_epid_context);
     //call sgx_seal_data to generate EPID_DATA_BLOB
     if((sgx_status=sgx_seal_data(
         sizeof(se_plaintext_epid_data_sdk_t), reinterpret_cast<uint8_t*>(plaintext),//plaintext as AAD
@@ -171,6 +190,7 @@ static pve_status_t gen_epid_blob(const extended_epid_group_blob_t* pxegb,
             goto ret_point;
     }
 ret_point:
+    epid_member_delete(&p_epid_context);
     if(tmp_buffer){
         //reset memory to 0 of the temp buffer to defense in depth
         (void)memset_s(tmp_buffer,tmp_buffer_size, 0, tmp_buffer_size);
@@ -227,8 +247,10 @@ pve_status_t proc_prov_msg4_data(const proc_prov_msg4_input_t *msg4_input,
     memcpy(&device_id_in_aad->psvn, &msg4_input->equivalent_psvn, sizeof(psvn_t));
     memset(&device_id_in_aad->ppid, 0 ,sizeof(ppid_t));
 
+
     se_static_assert(sizeof(sgx_aes_gcm_128bit_key_t)==sizeof(pwk2)); /*SK_SIZE should be same as that of sgx_aes_gcm_128bit_key_t*/
     se_static_assert(sizeof(sgx_aes_gcm_128bit_tag_t)==sizeof(msg4_input->member_credential_mac)); /*member_credential_mac size should be same as that of sgx_aes_gcm_128bit_tag_t*/
+
     se_static_assert(HARD_CODED_EPID_MEMBER_WITH_ESCROW_TLV_SIZE == MEMBERSHIP_CREDENTIAL_TLV_TOTAL_SIZE); /*hardcoded size should be matched*/
 
     sgx_status = sgx_rijndael128GCM_decrypt(reinterpret_cast<sgx_aes_gcm_128bit_key_t *>(&pwk2),

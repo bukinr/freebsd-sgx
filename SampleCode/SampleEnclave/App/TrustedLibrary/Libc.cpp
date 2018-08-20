@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +44,7 @@ void ecall_libc_functions(void)
     if (ret != SGX_SUCCESS)
         abort();
     
-    int cpuid[4] = {0x1, 0x0, 0x0, 0x0};
+    int cpuid[4] = {0x0, 0x0, 0x0, 0x0};
     ret = ecall_sgx_cpuid(global_eid, cpuid, 0x0);
     if (ret != SGX_SUCCESS)
         abort();

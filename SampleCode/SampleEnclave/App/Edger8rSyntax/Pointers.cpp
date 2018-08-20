@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,14 +103,6 @@ void edger8r_pointer_attributes(void)
 
     for (int i = 0; i < 10; i++)
         assert(arr[i] == (9 - i));
-    
-    memset(arr, 0x0, sizeof(arr));
-    ret = ecall_pointer_sizefunc(global_eid, (char *)arr);
-    if (ret != SGX_SUCCESS)
-        abort();
-
-    for (int i = 0; i < 10; i++)
-        assert(arr[i] == i);
     
     return;
 }

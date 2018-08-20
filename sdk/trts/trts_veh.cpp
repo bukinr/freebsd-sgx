@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,7 +45,11 @@
 #include "thread_data.h"
 #include "global_data.h"
 #include "trts_internal.h"
+#include "trts_inst.h"
+#include "util.h"
 #include "trts_util.h"
+#include "trts_shared_constants.h"
+
 
 typedef struct _handler_node_t
 {
@@ -279,6 +283,17 @@ failed_end:
     abort();    // throw abortion
 }
 
+static int expand_stack_by_pages(void *start_addr, size_t page_count)
+{
+    int ret = -1;
+
+    if ((start_addr == NULL) || (page_count == 0))
+        return -1;
+
+    ret = apply_pages_within_exception(start_addr, page_count);
+    return ret;
+}
+
 // trts_handle_exception(void *tcs)
 //      the entry point for the exceptoin handling
 // Parameter
@@ -286,7 +301,6 @@ failed_end:
 // Return Value
 //      none zero - success
 //              0 - fail
-#include "trts_internal.h"
 extern "C" sgx_status_t trts_handle_exception(void *tcs)
 {
     thread_data_t *thread_data = get_thread_data();
@@ -296,6 +310,8 @@ extern "C" sgx_status_t trts_handle_exception(void *tcs)
     size_t size = 0;
 
     if (tcs == NULL) goto default_handler;
+    if (check_static_stack_canary(tcs) != 0)
+        goto default_handler;
     
     if(get_enclave_state() != ENCLAVE_INIT_DONE)
     {
@@ -323,10 +339,9 @@ extern "C" sgx_status_t trts_handle_exception(void *tcs)
     }
 
     size = 0;
-#ifdef SE_GNU64
-    size += 128; // x86_64 requires a 128-bytes red zone, which begins directly
-                 // after the return addr and includes func's arguments
-#endif
+    // x86_64 requires a 128-bytes red zone, which begins directly
+    // after the return addr and includes func's arguments
+    size += RED_ZONE_SIZE;
 
     // decrease the stack to give space for info
     size += sizeof(sgx_exception_info_t);
@@ -340,14 +355,44 @@ extern "C" sgx_status_t trts_handle_exception(void *tcs)
         return SGX_ERROR_STACK_OVERRUN;
     }
 
+    info = (sgx_exception_info_t *)sp;
+    // decrease the stack to save the SSA[0]->ip
+    size = sizeof(uintptr_t);
+    sp -= size;
+    if(!is_stack_addr((void *)sp, size))
+    {
+        g_enclave_state = ENCLAVE_CRASHED;
+        return SGX_ERROR_STACK_OVERRUN;
+    }
+    
+    // sp is within limit_addr and commit_addr, currently only SGX 2.0 under hardware mode will enter this branch.^M
+    if((size_t)sp < thread_data->stack_commit_addr)
+    { 
+        int ret = -1;
+        size_t page_aligned_delta = 0;
+        /* try to allocate memory dynamically */
+        page_aligned_delta = ROUND_TO(thread_data->stack_commit_addr - (size_t)sp, SE_PAGE_SIZE);
+        if ((thread_data->stack_commit_addr > page_aligned_delta)
+                && ((thread_data->stack_commit_addr - page_aligned_delta) >= thread_data->stack_limit_addr))
+        {
+            ret = expand_stack_by_pages((void *)(thread_data->stack_commit_addr - page_aligned_delta), (page_aligned_delta >> SE_PAGE_SHIFT));
+        }
+        if (ret == 0)
+        {
+            thread_data->stack_commit_addr -= page_aligned_delta;
+            return SGX_SUCCESS;
+        }
+        else
+        {
+            g_enclave_state = ENCLAVE_CRASHED;
+            return SGX_ERROR_STACK_OVERRUN;
+        }
+    }
+
     if(ssa_gpr->exit_info.valid != 1)
     {   // exception handlers are not allowed to call in a non-exception state
         goto default_handler;
     }
-    
-    info = (sgx_exception_info_t *)sp;
-    
-    // No need to check the stack as it have already been checked by assembly code
 
     // initialize the info with SSA[0]
     info->exception_vector = (sgx_exception_vector_t)ssa_gpr->exit_info.vector;
@@ -374,14 +419,7 @@ extern "C" sgx_status_t trts_handle_exception(void *tcs)
     info->cpu_context.r15 = ssa_gpr->r15;
 #endif
 
-    // decrease the stack to save the SSA[0]->ip
-    size = sizeof(uintptr_t);
-    new_sp = (uintptr_t *)(sp - size);
-    if(!is_stack_addr(new_sp, size))
-    {
-        g_enclave_state = ENCLAVE_CRASHED;
-        return SGX_ERROR_STACK_OVERRUN;
-    }
+    new_sp = (uintptr_t *)sp;
     ssa_gpr->REG(ip) = (size_t)internal_handle_exception; // prepare the ip for 2nd phrase handling
     ssa_gpr->REG(sp) = (size_t)new_sp;      // new stack for internal_handle_exception
     ssa_gpr->REG(ax) = (size_t)info;        // 1st parameter (info) for LINUX32

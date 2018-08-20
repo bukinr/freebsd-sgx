@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,8 +39,9 @@
 
 #include "linux/linux-regs.h"
 #include "rts_cmd.h"
+#include "trts_shared_constants.h"
 
-#define SE_GUARD_PAGE_SIZE 0x1000
+#define SE_GUARD_PAGE_SIZE 0x10000
 
 #define ENCLAVE_INIT_NOT_STARTED    0
 #define ENCLAVE_INIT_IN_PROGRESS    1
@@ -55,7 +56,6 @@
 #define SGX_ERROR_ENCLAVE_CRASHED     0x000001006 // enclave is crashed
 #define SGX_ERROR_STACK_OVERRUN       0x000001009 // enclave is running out of stack
 
-#define STATIC_STACK_SIZE   (SE_WORDSIZE * 100)
 
 /* Thread Data
  * c.f. data structure defintion for thread_data_t in `rts.h'.
@@ -64,6 +64,7 @@
 #define stack_base_addr     (SE_WORDSIZE * 2)
 #define stack_limit_addr    (SE_WORDSIZE * 3)
 #define first_ssa_gpr       (SE_WORDSIZE * 4)
+#define xsave_size          (SE_WORDSIZE * 7)
 #define self_addr           0
 #define stack_guard         (SE_WORDSIZE * 5)
 

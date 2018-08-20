@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,6 +61,14 @@ int SGXAPI sgx_is_within_enclave(const void *addr, size_t size);
  *          or the buffer is wrap around
 */
 int SGXAPI sgx_is_outside_enclave(const void *addr, size_t size);
+
+
+/* sgx_is_enclave_crashed()
+ * Return Value:
+ *      1 - the enclave state is crashed.
+ *      0 - the enclave state is not crashed.
+ */
+int SGXAPI sgx_is_enclave_crashed(void) __attribute__((section(".nipx")));
 
 
 /* sgx_read_rand()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 
-
+ 
 /**
 * File: sgx_tcrypto.h
 * Description:
@@ -42,6 +42,7 @@
 
 #include "sgx.h"
 #include "sgx_defs.h"
+#include "stdlib.h"
 
 #define SGX_SHA256_HASH_SIZE            32
 #define SGX_ECP256_KEY_SIZE             32
@@ -60,12 +61,6 @@ typedef struct _sgx_ec256_dh_shared_t
 {
     uint8_t s[SGX_ECP256_KEY_SIZE];
 } sgx_ec256_dh_shared_t;
-
-typedef struct _sgx_ec256_dh_shared512_t
-{
-    uint8_t x[SGX_ECP256_KEY_SIZE];
-    uint8_t y[SGX_ECP256_KEY_SIZE];
-} sgx_ec256_dh_shared512_t;
 
 typedef struct _sgx_ec256_private_t
 {
@@ -90,11 +85,12 @@ typedef struct _sgx_rsa3072_public_key_t
     uint8_t exp[SGX_RSA3072_PUB_EXP_SIZE];
 } sgx_rsa3072_public_key_t;
 
-typedef struct _sgx_rsa3072_private_key_t
+typedef struct _sgx_rsa3072_key_t
 {
     uint8_t mod[SGX_RSA3072_KEY_SIZE];
-    uint8_t exp[SGX_RSA3072_PRI_EXP_SIZE];
-} sgx_rsa3072_private_key_t;
+    uint8_t d[SGX_RSA3072_PRI_EXP_SIZE];
+    uint8_t e[SGX_RSA3072_PUB_EXP_SIZE];
+} sgx_rsa3072_key_t;
 
 typedef uint8_t sgx_rsa3072_signature_t[SGX_RSA3072_KEY_SIZE];
 
@@ -142,6 +138,41 @@ typedef enum {
 
 	SGX_RSA_INVALID_SIGNATURE    /* invalid signature */
 } sgx_rsa_result_t;
+
+typedef enum {
+    SGX_RSA_PRIVATE_KEY,               /* RSA private key state     */
+
+    SGX_RSA_PUBLIC_KEY    /* RSA public key state */
+} sgx_rsa_key_type_t;
+
+#define N_SIZE_IN_BYTES    384
+#define E_SIZE_IN_BYTES    4
+#define D_SIZE_IN_BYTES    384
+#define P_SIZE_IN_BYTES    192
+#define Q_SIZE_IN_BYTES    192
+#define DMP1_SIZE_IN_BYTES 192
+#define DMQ1_SIZE_IN_BYTES 192
+#define IQMP_SIZE_IN_BYTES 192
+
+#define N_SIZE_IN_UINT     N_SIZE_IN_BYTES/sizeof(unsigned int)
+#define E_SIZE_IN_UINT     E_SIZE_IN_BYTES/sizeof(unsigned int)
+#define D_SIZE_IN_UINT     D_SIZE_IN_BYTES/sizeof(unsigned int)
+#define P_SIZE_IN_UINT     P_SIZE_IN_BYTES/sizeof(unsigned int)
+#define Q_SIZE_IN_UINT     Q_SIZE_IN_BYTES/sizeof(unsigned int)
+#define DMP1_SIZE_IN_UINT  DMP1_SIZE_IN_BYTES/sizeof(unsigned int)
+#define DMQ1_SIZE_IN_UINT  DMQ1_SIZE_IN_BYTES/sizeof(unsigned int)
+#define IQMP_SIZE_IN_UINT  IQMP_SIZE_IN_BYTES/sizeof(unsigned int)
+
+typedef struct _rsa_params_t {
+	unsigned int n[N_SIZE_IN_UINT];
+	unsigned int e[E_SIZE_IN_UINT];
+	unsigned int d[D_SIZE_IN_UINT];
+	unsigned int p[P_SIZE_IN_UINT];
+	unsigned int q[Q_SIZE_IN_UINT];
+	unsigned int dmp1[DMP1_SIZE_IN_UINT];
+	unsigned int dmq1[DMQ1_SIZE_IN_UINT];
+	unsigned int iqmp[IQMP_SIZE_IN_UINT];
+}rsa_params_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -310,8 +341,8 @@ extern "C" {
     * Parameters:
     *   Return: sgx_status_t  - SGX_SUCCESS or failure as defined in sgx_error.h
     *   Inputs: sgx_cmac_128bit_key_t *p_key - Pointer to the key used in encryption/decryption operation
-    *           uint8_t *p_src - Pointer to the input stream to be MAC’d
-    *           uint32_t src_len - Length of the input stream to be MAC’d
+    *           uint8_t *p_src - Pointer to the input stream to be MAC'd
+    *           uint32_t src_len - Length of the input stream to be MAC'd
     *   Output: sgx_cmac_gcm_128bit_tag_t *p_mac - Pointer to the resultant MAC
     */
     sgx_status_t SGXAPI sgx_rijndael128_cmac_msg(const sgx_cmac_128bit_key_t *p_key,
@@ -354,16 +385,17 @@ extern "C" {
     */
     sgx_status_t SGXAPI sgx_cmac128_close(sgx_cmac_state_handle_t cmac_handle);
 
-
    /** AES-CTR 128-bit - Only 128-bit key size is supported.
     *
     * These functions encrypt/decrypt the input data stream of a variable length according
     * to the CTR mode as specified in [NIST SP 800-38A].  The counter can be thought of as
-    * an IV which increments on successive encryption or decrytion calls. For a given
+    * an IV which increments on successive encryption or decryption calls. For a given
     * dataset or data stream the incremented counter block should be used on successive
     * calls of the encryption/decryption process for that given stream.  However for
     * new or different datasets/streams, the same counter should not be reused, instead
     * intialize the counter for the new data set.
+    * Note: SGXSSL based version doesn't support user given ctr_inc_bits. It use OpenSSL's implementation
+    * which divide the counter block into two parts ([IV][counter])
     *
     * sgx_aes_ctr_encrypt
     *      Return: If source, key, counter, or destination pointer is NULL,
@@ -393,7 +425,7 @@ extern "C" {
     *   Output:
     *     uint8_t *p_dst - Pointer to the cipher text.
     *                      Size of buffer should be >= src_len.
-   */
+    */
     sgx_status_t SGXAPI sgx_aes_ctr_encrypt(
                         const sgx_aes_ctr_128bit_key_t *p_key,
                         const uint8_t *p_src,
@@ -401,6 +433,7 @@ extern "C" {
                         uint8_t *p_ctr,
                         const uint32_t ctr_inc_bits,
                         uint8_t *p_dst);
+
     sgx_status_t SGXAPI sgx_aes_ctr_decrypt(
                         const sgx_aes_ctr_128bit_key_t *p_key,
                         const uint8_t *p_src,
@@ -408,6 +441,7 @@ extern "C" {
                         uint8_t *p_ctr,
                         const uint32_t ctr_inc_bits,
                         uint8_t *p_dst);
+
 
 
    /**
@@ -479,6 +513,7 @@ extern "C" {
                                                 sgx_ec256_public_t *p_public,
                                                 sgx_ecc_state_handle_t ecc_handle);
 
+
     /** Checks whether the input point is a valid point on the given elliptic curve.
      * Parameters:
      *  Return: sgx_status_t - SGX_SUCCESS or failure as defined sgx_error.h
@@ -489,6 +524,7 @@ extern "C" {
     sgx_status_t SGXAPI sgx_ecc256_check_point(const sgx_ec256_public_t *p_point,
                                     const sgx_ecc_state_handle_t ecc_handle,
                                     int *p_valid);
+
 
    /** Computes DH shared key based on own (local) private key and remote public Ga Key.
     * NOTE: Caller code allocates memory for Shared key pointer to be populated
@@ -543,20 +579,8 @@ extern "C" {
                                                     sgx_ec256_dh_shared_t *p_shared_key,
                                                     sgx_ecc_state_handle_t ecc_handle);
 
-   /* Computes 512-bit DH shared key based on private B key (local) and remote public Ga Key
-    * Parameters:
-    *   Return: sgx_status_t - SGX_SUCCESS or failure as defined in sgx_error.h
-    *   Inputs: sgx_ecc_state_handle_t ecc_handle - Handle to the ECC crypto system
-    *           sgx_ec256_private_t *p_private_b - Pointer to the local private key
-    *           sgx_ec256_public_t *p_public_ga - Pointer to the remote public key
-    *   Output: sgx_ec256_dh_shared512_t *p_shared_key - Pointer to the 512-bit shared DH key
-    */
-    sgx_status_t SGXAPI sgx_ecc256_compute_shared_dhkey512(sgx_ec256_private_t *p_private_b,
-                                                    sgx_ec256_public_t *p_public_ga,
-                                                    sgx_ec256_dh_shared512_t *p_shared_key,
-                                                    sgx_ecc_state_handle_t ecc_handle);
-
-   /** Computes signature for data based on private key.
+   
+    /** Computes signature for data based on private key.
     *
     * A message digest is a fixed size number derived from the original message with
     * an applied hash function over the binary code of the message. (SHA256 in this case)
@@ -634,12 +658,13 @@ extern "C" {
     *   Return: sgx_status_t  - SGX_SUCCESS or failure as defined in sgx_error.h
     *   Inputs: uint8_t *p_data - Pointer to the data to be signed
     *           uint32_t data_size - Size of the data to be signed
-    *           sgx_rsa3072_private_key_t *p_private - Pointer to the private key
+    *           sgx_rsa3072_key_t *p_key - Pointer to the RSA key. 
+    *				Note: In IPP based version p_key->e is unused, hence it can be NULL.
     *   Output: sgx_rsa3072_signature_t *p_signature - Pointer to the signature output
     */
     sgx_status_t sgx_rsa3072_sign(const uint8_t *p_data,
         uint32_t data_size,
-        const sgx_rsa3072_private_key_t *p_private,
+        const sgx_rsa3072_key_t *p_key,
         sgx_rsa3072_signature_t *p_signature);
 
     /** Verifies the signature for the given data based on the RSA 3072 public key.
@@ -667,8 +692,111 @@ extern "C" {
         const sgx_rsa3072_signature_t *p_signature,
 		sgx_rsa_result_t *p_result);
 
+    /** Create RSA key pair with <n_byte_size> key size and <e_byte_size> public exponent.
+    *
+    * Parameters:
+    *   Return: sgx_status_t  - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: p_e [In/Out] Pointer to the public exponent e.
+    *           n_byte_size [In] Size in bytes of the key modulus.
+    *           e_byte_size	[In] Size in bytes of the key public exponent.
+    *   Output: p_*			[Out] Pointer to the matching key parameter/factor buffer.
+    */
+    sgx_status_t sgx_create_rsa_key_pair(int n_byte_size, int e_byte_size, unsigned char *p_n, unsigned char *p_d, unsigned char *p_e,
+        unsigned char *p_p, unsigned char *p_q, unsigned char *p_dmp1,
+        unsigned char *p_dmq1, unsigned char *p_iqmp);
+
+    /** Decrypt ciphertext [pin_data] using RSA private key, with OAEP SHA-256
+    *
+    * Parameters:
+    *   Return: sgx_status_t  - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: rsa_key	- Pointer to the RSA private key.
+    *           pin_data - Pointer to the input ciphertext buffer.
+    *           pin_len - Ciphertext buffer size.
+    *   Output: pout_data - Pointer to the output buffer.
+    *           pout_len - Pointer to amount of data written.
+    *
+    */
+    sgx_status_t sgx_rsa_priv_decrypt_sha256(void* rsa_key, unsigned char* pout_data, size_t* pout_len, const unsigned char* pin_data, const size_t pin_len);
+
+    /** Encrypt input data [pin_data] using RSA public key, with OAEP SHA-256
+    *
+    * Parameters:
+    *   Return: sgx_status_t  - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: rsa_key - Pointer to the RSA public key.
+    *           pin_data - Pointer to the input data buffer.
+    *           pin_len - Input buffer size.
+    *   Output: pout_data - Pointer to the output buffer.
+    *           pout_len - Pointer to amount of data (ciphertext) written.
+    *
+    */
+    sgx_status_t sgx_rsa_pub_encrypt_sha256(void* rsa_key, unsigned char* pout_data, size_t* pout_len, const unsigned char* pin_data, const size_t pin_len);
+
+    /** Create RSA private key using input buffer factors in little endian.
+    *
+    * Parameters:
+    *   Return: sgx_status_t - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: mod_size - Size in bytes of the key modulus.
+    *           exp_size - Size in bytes of the public exponent e.
+    *           p_rsa_key_e	- Pointer to the public exponent e buffer.
+    *           p_rsa_key_p	- Pointer to the prime number p.
+    *           p_rsa_key_q	- Pointer to the prime number q.
+    *           p_rsa_key_dmp1 - Pointer to dmp1 [d mod (p-1)].
+    *           p_rsa_key_dmq1 - Pointer to dmq1 [d mod (q-1)].
+    *           p_rsa_key_iqmp - Pointer to iqmp [q^-1 mod p].
+    *   Output: new_pri_key2 - Pointer to the generated private key.
+    *
+    */
+    sgx_status_t sgx_create_rsa_priv2_key(int mod_size, int exp_size, const unsigned char *p_rsa_key_e, const unsigned char *p_rsa_key_p, const unsigned char *p_rsa_key_q,
+        const unsigned char *p_rsa_key_dmp1, const unsigned char *p_rsa_key_dmq1, const unsigned char *p_rsa_key_iqmp,
+        void **new_pri_key2);
+
+    /** Create RSA public key using input buffer factors in little endian.
+    *
+    * Parameters:
+    *   Return: sgx_status_t - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: mod_size		- Size in bytes of the key modulus.
+    *           exp_size		- Size in bytes of the public exponent e.
+    *           le_n			- Pointer to the modulus n buffer.
+    *           le_e - Pointer to the public exponent e buffer.
+    *   Output: new_pub_key1 - Pointer to the generated public key.
+    *
+    */
+    sgx_status_t sgx_create_rsa_pub1_key(int mod_size, int exp_size, const unsigned char *le_n, const unsigned char *le_e, void **new_pub_key1);
+
+    /** Clear and free RSA key which was generated by one of the Tcrypto "sgx_create_rsa_*" APIs.
+    *
+    * Parameters:
+    *   Return: sgx_status_t - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: p_rsa_key		- Pointer to the RSA key.
+    *           (Note: All input parameters below are relevant only when using IPP based tcrypto library)
+    *           key_type		- key state type, relevant only when using IPP based tcrypto library.
+    *                             Possible options {SGX_RSA_PRIVATE_KEY, SGX_RSA_PUBLIC_KEY}
+    *           mod_size		- RSA key modulus size.
+    *           exp_size		- RSA key public exponent size.
+    *   Output:
+    *
+    */
+    sgx_status_t sgx_free_rsa_key(void *p_rsa_key, sgx_rsa_key_type_t key_type, int mod_size, int exp_size);
+
+    /** Create an ECDSA private key based on input random seed.
+    *
+    * Parameters:
+    *   Return: sgx_status_t - SGX_SUCCESS or failure as defined in sgx_error.h
+    *   Inputs: hash_drg - Input seed
+    *           hash_drg_len - Seed len
+    *           sgx_nistp256_r_m1 -
+    *           sgx_nistp256_r_m1_len - nistp256 len
+    *   Output: out_key - ECDSA private key
+    *           out_key_len - ECDSA private key length
+    *
+    */
+    sgx_status_t sgx_calculate_ecdsa_priv_key(const unsigned char* hash_drg, int hash_drg_len,
+        const unsigned char* sgx_nistp256_r_m1, int sgx_nistp256_r_m1_len,
+        unsigned char* out_key, int out_key_len);
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+

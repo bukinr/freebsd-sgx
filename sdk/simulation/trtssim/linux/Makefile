@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -55,6 +55,8 @@ TLS_DIR    := $(SIM_DIR)/uinst/linux/
 TLDR_DIR   := $(LINUX_SDK_DIR)/trts/linux/
 # Support for platform dependent 'setcontext'
 SC_DIR     := $(LINUX_SDK_DIR)/trts/linux/$(ARCH)/
+# The source for xsave/xrstor
+XSAVE_DIR     := $(COMMON_DIR)/src/linux/
 
 TRTS1_OBJS  := init_enclave.o \
                trts.o         \
@@ -63,7 +65,10 @@ TRTS1_OBJS  := init_enclave.o \
                trts_util.o    \
                trts_veh.o     \
                trts_xsave.o   \
-               init_optimized_lib.o
+               init_optimized_lib.o \
+               trts_emodpr.o  \
+               trts_switchless.o \
+               trts_add_trim.o
 TRTS2_OBJS  := trts_nsp.o
 TRTS_OBJS := $(TRTS1_OBJS) $(TRTS2_OBJS)
 
@@ -76,7 +81,8 @@ TLS_OBJS     := get_tcs.o \
                 restore_tls.o
 
 TLDR_ASM_OBJS := trts_pic.o \
-                metadata_sec.o
+                metadata_sec.o \
+                xsave_gnu.o
 
 TLDR_C_OBJS  := elf_parser.o  \
                 global_init.o \
@@ -89,7 +95,7 @@ SC_OBJ := setcontext.o
 LIBTRTS := libsgx_trts_sim.a
 
 vpath %.cpp $(TRTS_DIR):$(TINST_DIR)
-vpath %.S   $(LOWLIB_DIR):$(TLDR_DIR):$(SC_DIR)
+vpath %.S   $(LOWLIB_DIR):$(TLDR_DIR):$(SC_DIR):$(XSAVE_DIR)
 vpath %.c   $(TLS_DIR):$(TLDR_DIR)
 
 # ------------------------------------------------------------

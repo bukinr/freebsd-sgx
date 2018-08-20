@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -44,7 +44,7 @@ CPPFLAGS += -I$(COMMON_DIR)/inc/         \
             -I$(SIM_DIR)/assembly/       \
             -I$(SIM_DIR)/assembly/linux  \
             -I$(LINUX_PSW_DIR)/urts      \
-            -I$(SGX_IPP_INC)
+            -I$(LINUX_PSW_DIR)/urts/linux
 
 CXXFLAGS += -fPIC
 
@@ -63,7 +63,7 @@ enclave_mngr.o: enclave_mngr.cpp
 # since the '_SE3' function has assumptions on stack layout.
 #
 u_instructions.o: u_instructions.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -O0 -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -Wno-error=cpp -c $< -o $@
 
 $(LIBSESIMU_U): u_instructions.o enclave_mngr.o $(OBJ1)
 	$(AR) rcs $@ $^

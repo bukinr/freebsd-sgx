@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,23 +89,28 @@ public:
     virtual void get_reloc_entry_offset(const char* sec_name,
                                         vector<uint64_t>& offsets) = 0;
 
-    // We need to put this method into BinParser class since
-    // the `global_data_t' is platform-dependent as the parser.
-    // c.f. global_data.h for more information.
-    //
-    // Unfortunately, although the implementation is the same,
-    // we can't put them here but into the subclasses -
-    // ElfParsr and PEParser, since the `global_data_t' for
-    // them are different in terms of size and layout.
-    virtual bool update_global_data(const create_param_t* const create_param,
+    // !We need to put this method into BinParser class since
+    // !the `global_data_t' is platform-dependent as the parser.
+    // !c.f. global_data.h for more information.
+    // !
+    // !Unfortunately, although the implementation is the same,
+    // !we can't put them here but into the subclasses -
+    // !ElfParsr and PEParser, since the `global_data_t' for
+    // !them are different in terms of size and layout.
+    virtual bool update_global_data(const metadata_t *const metadata, 
+                                    const create_param_t* const create_param,
                                     uint8_t *data,
                                     uint32_t *data_size) = 0;
+    virtual uint32_t get_global_data_size() = 0;
 
     virtual sgx_status_t modify_info(enclave_diff_info_t *enclave_diff_info) = 0;
 
     virtual sgx_status_t get_info(enclave_diff_info_t *enclave_diff_info) = 0;
 
     virtual void get_executable_sections(vector<const char *>& xsec_names) const = 0;
+    virtual bool set_memory_protection(uint64_t enclave_base_addr, bool is_after_initialization) = 0;
+    virtual void get_pages_to_protect(uint64_t, std::vector<std::tuple<uint64_t, uint64_t, uint32_t>>&) const = 0;
+    virtual bool has_init_section() const = 0;
 };
 
 #endif

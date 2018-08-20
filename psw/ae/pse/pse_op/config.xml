@@ -3,10 +3,12 @@
     <ProvisionKey>0</ProvisionKey>
     <LaunchKey>0</LaunchKey>
     <ProdID>0x2</ProdID>
-    <ISVSVN>4</ISVSVN>
+    <ISVSVN>8</ISVSVN>
     <TCSNum>1</TCSNum>
+    <TCSMinPool>0</TCSMinPool>
     <TCSPolicy>1</TCSPolicy>
     <StackMaxSize>0x10000</StackMaxSize>
     <HeapMaxSize>0x100000</HeapMaxSize>
+    <HeapMinSize>0x100000</HeapMinSize>
     <DisableDebug>1</DisableDebug>
 </EnclaveConfiguration>

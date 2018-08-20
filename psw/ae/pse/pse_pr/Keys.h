@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@ public:
 
     static const uint8_t* EpidParamsCert(size_t& nBytes);
     static const uint8_t** EpidVerifyKeys();
-    static const uint32_t EpidVerifyKeyNum();
+    static uint32_t EpidVerifyKeyNum();
 
 private:
 

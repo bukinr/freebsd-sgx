@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,39 +31,90 @@
 
 include ../../buildenv.mk
 
-CXXFLAGS += $(ENCLAVE_CXXFLAGS) -fno-exceptions -fno-rtti
-
 CPPFLAGS := -I$(COMMON_DIR)/inc/internal \
             -I$(COMMON_DIR)/inc          \
-            -I$(COMMON_DIR)/inc/tlibc    \
-            -I$(SGX_IPP_INC)
+            -I$(COMMON_DIR)/inc/tlibc
 
-ifneq ($(USE_OPT_LIBS), 0)
-	CXXFLAGS += -DSGX_USE_OPT_LIB	
+CXXFLAGS += $(ENCLAVE_CXXFLAGS) -fno-exceptions -fno-rtti
+
+OBJ = init_tcrypto_lib.o sgx_aes_ctr.o sgx_rsa_encryption.o sgx_aes_gcm.o sgx_cmac128.o sgx_ecc256.o sgx_ecc256_ecdsa.o sgx_sha256.o sgx_sha256_msg.o sgx_ecc256_internal.o sgx_rsa3072.o
+SHARED_OBJ = tcrypto_version.o
+
+ifneq ($(USE_OPT_LIBS), 1)
+
+# Added to build with SgxSSL libraries
+ifeq ($(ARCH), x86_64)
+	OPENSSL_PACKAGE = $(LINUX_EXTERNAL_DIR)/sgxssl/Linux/package
+else
+	$(error SGXSSL doesn't support 32bit)
+endif #($(ARCH), x86_64)
+OPENSSL_LIBRARY_PATH := $(OPENSSL_PACKAGE)/lib64/
+ifdef DEBUG
+	OpenSSL_Crypto_Library_Name := sgx_tsgxssl_cryptod
+	SGXSSL_Library_Name := sgx_tsgxssld
+	SGX_COMMON_CFLAGS += -O0
+else
+	OpenSSL_Crypto_Library_Name := sgx_tsgxssl_crypto
+	SGXSSL_Library_Name := sgx_tsgxssl
 endif
 
-OBJ = init_tcrypto_lib.o sgx_aes_ctr.o sgx_aes_gcm.o sgx_cmac128.o sgx_ecc256.o sgx_ecc256_common.o sgx_ecc256_ecdsa.o sgx_sha256.o sgx_sha256_msg.o tcrypto_version.o sgx_ecc512.o sgx_rsa3072.o
+PREPARE_SGXSSL := $(LINUX_EXTERNAL_DIR)/sgxssl/prepare_sgxssl.sh
+PREPRARE_SGX_SSL:
+	chmod 755 $(PREPARE_SGXSSL)
+	test -f $(OPENSSL_LIBRARY_PATH)/lib$(SGXSSL_Library_Name).a || $(PREPARE_SGXSSL)
 
+CPPFLAGS += -I$(OPENSSL_PACKAGE)/include
+CXXFLAGS += -DUSE_SGXSSL
+SRCDIR := sgxssl
+
+LIB_NAME := libsgx_tcrypto_sgxssl.a
+
+else
+
+CPPFLAGS += -I$(SGX_IPP_INC)
+CFLAGS += $(CPPFLAGS) $(ENCLAVE_CFLAGS) $(SGX_COMMON_CFLAGS) -Werror -fno-exceptions -fPIC
+
+OBJ += sgx_tcrypto_common.o sgx_rsa_internal.o
+SRCDIR := ipp
+
+C_Files := $(wildcard $(SRCDIR)/ipp_disp/*.c)
+C_OBJS  := $(C_Files:.c=.o)
+C_OBJS  := $(sort $(C_OBJS))
+
+LIB_NAME := libsgx_tcrypto_ipp.a
+
+endif #!($(USE_OPT_LIBS), 1)
+
+OBJ := $(addprefix $(SRCDIR)/, $(OBJ))
+LIB_NAME := $(addprefix $(SRCDIR)/, $(LIB_NAME))
 TARGET := libsgx_tcrypto.a
 
-ifneq ($(USE_OPT_LIBS), 0)
-$(TARGET): $(OBJ)
-	$(MKDIR) $(BUILD_DIR)/.libippcore
-	$(RM) $(BUILD_DIR)/.libippcore/*
-	cd $(BUILD_DIR)/.libippcore && $(AR) x $(IPP_LIBS_DIR)/libippcore.a
-	@$(CP) $(IPP_LIBS_DIR)/libippcp.a $@
-	$(AR) rsD $@ $(OBJ) $(BUILD_DIR)/.libippcore/*.o
-	$(RM) -r $(BUILD_DIR)/.libippcore
+ifneq ($(USE_OPT_LIBS), 1)
+
+$(TARGET): PREPRARE_SGX_SSL 
+	$(MAKE) $(OBJ) 
+	$(MAKE) $(SHARED_OBJ)
+	$(MKDIR) $(BUILD_DIR)/.libs
+	$(RM) $(BUILD_DIR)/.libs/*
+	cd $(BUILD_DIR)/.libs && \
+	$(AR) x $(OPENSSL_LIBRARY_PATH)/lib$(OpenSSL_Crypto_Library_Name).a && \
+	$(AR) x $(OPENSSL_LIBRARY_PATH)/lib$(SGXSSL_Library_Name).a 
+	$(AR) rsD $(LIB_NAME) $(OBJ) $(SHARED_OBJ) $(BUILD_DIR)/.libs/*.o
+	$(CP) $(LIB_NAME) $@
+	$(RM) -r $(BUILD_DIR)/.libs 
 else
-libcrypto_px:
-	$(MAKE) -C $(SGX_IPP_DIR)
 
-$(TARGET): $(OBJ) libcrypto_px
-	@$(CP) $(SGX_IPP_DIR)/libcrypto_px.a $@
-	$(AR) rsD $@ $(OBJ)
-endif
+$(TARGET): $(OBJ) $(SHARED_OBJ) $(C_OBJS)
+	@$(CP) $(IPP_LIBS_DIR)/libippcp.a $(LIB_NAME)
+	$(AR) rsD $(LIB_NAME) $(OBJ) $(SHARED_OBJ) $(C_OBJS)
+	$(CP) $(LIB_NAME) $@
 
-$(OBJ): %.o: %.cpp
+endif #!($(USE_OPT_LIBS), 1)
+
+$(SRCDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
+$(SHARED_OBJ): %.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 $(BUILD_DIR):
@@ -75,10 +126,7 @@ all: $(TARGET) | $(BUILD_DIR)
 
 .PHONY: clean
 clean:
-ifeq ($(USE_OPT_LIBS), 0)
-	$(MAKE) -C $(SGX_IPP_DIR)  clean
-endif
-	@$(RM) *.o $(TARGET) $(BUILD_DIR)/$(TARGET)
+	@$(RM) *.o ipp/*.o ipp/ipp_disp/*.o sgxssl/*.o $(TARGET) $(BUILD_DIR)/$(TARGET) $(LIB_NAME)
 
 .PHONY: rebuild
 rebuild:

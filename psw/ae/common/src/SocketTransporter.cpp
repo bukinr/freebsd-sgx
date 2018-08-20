@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,7 +82,7 @@ uae_oal_status_t SocketTransporter::sendMessage(AEMessage *message, ICommunicati
 uae_oal_status_t SocketTransporter::transact(IAERequest* request, IAEResponse* response, uint32_t timeout)
 {
     if (request == NULL || response == NULL)
-        return UAE_OAL_ERROR_UNEXPECTED;
+        return UAE_OAL_ERROR_INVALID;
 
 
     ICommunicationSocket* communicationSocket = mSocketFactory->NewCommunicationSocket();
@@ -137,9 +137,14 @@ IAERequest* SocketTransporter::receiveRequest(ICommunicationSocket* sock) {
     return request;
 }
 
-uae_oal_status_t SocketTransporter::sendResponse(IAEResponse* response, ICommunicationSocket* sock) {
+void SocketTransporter::sendResponse(IAEResponse* response, ICommunicationSocket* sock) {
+    if (response == NULL)
+        return;
     AEMessage * message = response->serialize();
-    uae_oal_status_t retVal = sendMessage(message, sock);
+    if (sendMessage(message, sock) != UAE_OAL_SUCCESS)
+    {
+        //server can't do anything, ignore status
+    }
     delete message;
-    return retVal;
+    return;
 }

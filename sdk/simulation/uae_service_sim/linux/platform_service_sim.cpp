@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,21 +37,12 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <pwd.h>
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
-#include "ae_ipp.h"
 
 static Mutex g_pse_sim_lock;
-
-__attribute__((constructor))
-// Initializer of the uae_service_sim.
-static void init_ipp(void)
-{
-#ifdef SGX_USE_OPT_LIB
-    // The return value of ippInit is discarded.
-    ippInit();
-#endif
-}   
 
 static char g_vmc_base_path[] = "/var/tmp/";
 

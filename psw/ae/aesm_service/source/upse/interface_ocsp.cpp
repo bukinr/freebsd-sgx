@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,9 +70,14 @@ extern "C" int get_ocsp_req_size(BIO* reqbio, OCSP_REQUEST *pOcspReq)
 void OpenSSL_init()
 {
 
+#ifdef CRYPTO_malloc_init
+    CRYPTO_malloc_init(); // OpenSSL 1.0 - Initialize malloc, free, etc for OpenSSL's use
+#else
+    OPENSSL_malloc_init(); // OpenSSL 1.1 - Initialize malloc, free, etc for OpenSSL's use
+#endif
+
 #if defined(_OPENSSL_FULL_INIT)
     
-    CRYPTO_malloc_init(); // Initialize malloc, free, etc for OpenSSL's use
     SSL_library_init(); // Initialize OpenSSL's SSL libraries
     SSL_load_error_strings(); // Load SSL error strings
     ERR_load_BIO_strings(); // Load BIO error strings
@@ -82,8 +87,6 @@ void OpenSSL_init()
     // This needed by openssl, else OCSP_basic_verify fails
     //
     EVP_add_digest(EVP_sha1());
-    // CRYPTO_malloc_init to be done first as per OpenSSL documentation
-    CRYPTO_malloc_init();
 #endif
 
 }
@@ -208,12 +211,14 @@ ae_error_t Get_OCSPResponse
             break;
         }
 
-        ocsp_request = (char*) malloc(reqbio->num_write);
+        size_t reqbio_num_write = BIO_number_written(reqbio);
+
+        ocsp_request = (char*) malloc(reqbio_num_write);
         if (NULL == ocsp_request) break;
 
-        memset(ocsp_request, 0x0, reqbio->num_write);
+        memset(ocsp_request, 0x0, reqbio_num_write);
 
-        retVal = reqbio->method->bread(reqbio, ocsp_request, static_cast<int>(reqbio->num_write));
+        retVal = BIO_read(reqbio, ocsp_request, static_cast<int>(reqbio_num_write));
         if (retVal <= 0) 
         {
             Helper::RemoveCertificateChain();
@@ -224,7 +229,7 @@ ae_error_t Get_OCSPResponse
 
         ae_error_t netStatus = aesm_network_send_receive(   urlOcspResponder, 
             (const uint8_t *) ocsp_request, 
-            static_cast<uint32_t>(reqbio->num_write), 
+            static_cast<uint32_t>(reqbio_num_write),
             (uint8_t **) &ocsp_response, 
             &ocsp_response_size, 
             POST, 
@@ -246,7 +251,7 @@ ae_error_t Get_OCSPResponse
         // reverse what we did for req above,
         // go from binary to mem bio to internal OpenSSL representation of response
         //
-        retVal = respbio->method->bwrite(respbio, (const char*) ocsp_response, ocsp_response_size);
+        retVal = BIO_write(respbio, (const char*) ocsp_response, ocsp_response_size);
         if (retVal <= 0) break;
 
         ae_error_t ocspRespError = AE_SUCCESS;

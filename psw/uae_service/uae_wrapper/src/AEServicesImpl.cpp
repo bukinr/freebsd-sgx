@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,7 +54,7 @@ uae_oal_status_t AEServicesImpl::InternalInterface(IAERequest* request, IAERespo
 {
     if(request->check() == false)
     {
-        return UAE_OAL_ERROR_UNEXPECTED;
+        return UAE_OAL_ERROR_INVALID;
     }
     uae_oal_status_t ipc_status = mTransporter->transact(request, response, timeout_msec);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,10 @@
 #define TRTS_INTERNAL_H
 
 #include "util.h"
-
-#ifdef SE_64
-#define STATIC_STACK_SIZE 8*100
-#else
-#define STATIC_STACK_SIZE 4*100
-#endif
+#include "trts_shared_constants.h"
 
 #define TD2TCS(td) ((const void *)(((thread_data_t*)(td))->stack_base_addr + (size_t)STATIC_STACK_SIZE + (size_t)SE_GUARD_PAGE_SIZE))
+#define TCS2CANARY(addr)    ((size_t *)((size_t)(addr)-(size_t)SE_GUARD_PAGE_SIZE-(size_t)STATIC_STACK_SIZE+sizeof(size_t)))
 
 typedef struct {
     const void     *ecall_addr;
@@ -68,10 +64,17 @@ void *get_enclave_base();
 int get_enclave_state();
 void set_enclave_state(int state);
 
-sgx_status_t do_init_enclave(void *ms);
+sgx_status_t do_init_thread(void *tcs, bool enclave_init);
+sgx_status_t do_init_enclave(void *ms, void *tcs) __attribute__((section(".nipx")));
 sgx_status_t do_ecall(int index, void *ms, void *tcs);
 sgx_status_t do_oret(void *ms);
 sgx_status_t trts_handle_exception(void *tcs);
+sgx_status_t do_ecall_add_thread(void *ms);
+sgx_status_t do_uninit_enclave(void *tcs);
+int check_static_stack_canary(void *tcs);
+sgx_status_t do_init_switchless(void* ms);
+sgx_status_t do_run_switchless_tworker(void* ms);
+
 #ifdef __cplusplus
 }
 #endif

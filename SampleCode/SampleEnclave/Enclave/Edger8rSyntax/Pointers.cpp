@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include "sgx_trts.h"
+#include "sgx_lfence.h"
 #include "../Enclave.h"
 #include "Enclave_t.h"
 
@@ -68,6 +69,9 @@ size_t ecall_pointer_user_check(void *val, size_t sz)
     /* check if the buffer is allocated outside */
     if (sgx_is_outside_enclave(val, sz) != 1)
         abort();
+
+    /*fence after sgx_is_outside_enclave check*/
+    sgx_lfence();
 
     char tmp[100] = {0};
     size_t len = sz>100?100:sz;
@@ -195,23 +199,3 @@ void ecall_pointer_isptr_readonly(buffer_t buf, size_t len)
     strncpy((char*)buf, "0987654321", len);
 }
 
-/* get_buffer_len:
- *   get the length of input buffer 'buf'.
- */
-size_t get_buffer_len(const char* buf)
-{
-    (void)buf;
-    return 10*sizeof(int);
-}
-
-/* ecall_pointer_sizefunc:
- *   call get_buffer_len to determin the length of 'buf'.
- */
-void ecall_pointer_sizefunc(char *buf)
-{
-    int *tmp = (int*)buf;
-    for (int i = 0; i < 10; i++) {
-        assert(tmp[i] == 0);
-        tmp[i] = i;
-    }
-}

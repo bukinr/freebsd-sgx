@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,10 +32,12 @@
 TOP_DIR  = ../../..
 include $(TOP_DIR)/buildenv.mk
 
+CXXFLAGS += -fpie -pie
+
 all: cse_provision_tool
 
 cse_provision_tool: cse_provision_tool.o
-	$(CXX) $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $< -ldl $(COMMON_LDFLAGS)
 
 %.o :%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@

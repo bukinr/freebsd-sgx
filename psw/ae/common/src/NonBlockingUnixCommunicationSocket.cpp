@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include <string.h>
-
+#include <se_trace.h>
 NonBlockingUnixCommunicationSocket::~NonBlockingUnixCommunicationSocket()
 {
    if (mEvents != NULL)
@@ -136,6 +136,10 @@ char* NonBlockingUnixCommunicationSocket::readRaw(ssize_t length)
     do{
         //try a direct read (maybe all data is available already)
         step = read(mSocket, recBuf, length);
+        if(step == -1 && errno == EINTR && CheckForTimeout() == false){
+             SE_TRACE_WARNING("read is interrupted by signal\n");
+             continue;
+        }
         if (step == -1 && errno != EAGAIN)
         {
             errorDetected = true;
@@ -154,7 +158,10 @@ char* NonBlockingUnixCommunicationSocket::readRaw(ssize_t length)
         }
 
         //wait for events
-        eventNum = epoll_wait(mEpoll, mEvents, MAX_EVENTS, epollTimeout);    
+        do {
+            eventNum = epoll_wait(mEpoll, mEvents, MAX_EVENTS, epollTimeout);
+        } while (eventNum == -1 && errno == EINTR && CheckForTimeout() == false);
+
         if (eventNum == -1)
         {
             errorDetected = true;
@@ -222,17 +229,22 @@ char* NonBlockingUnixCommunicationSocket::readRaw(ssize_t length)
         memset((char*)mEvents, 0, MAX_EVENTS * sizeof(struct epoll_event));
 
     }while (total_read < length);
-
-    event.data.fd = mSocket;
-    event.events = EPOLLET;
-    registerSocket = epoll_ctl (mEpoll, EPOLL_CTL_MOD, mSocket, &event);
-    if (registerSocket != 0)
+    if(mSocket!=-1)
     {
-        disconnect();
+        event.data.fd = mSocket;
+        event.events = EPOLLET;
+        registerSocket = epoll_ctl (mEpoll, EPOLL_CTL_MOD, mSocket, &event);
+        if (registerSocket != 0)
+        {
+            disconnect();
 
-        if (NULL != recBuf)
-            delete [] recBuf;
-        return NULL;
+            if (NULL != recBuf)
+                delete [] recBuf;
+            return NULL;
+        }
+    }else
+    {
+    // disconnected, recBuf is set NULL when disconnect() is called.
     }
 
     return recBuf;
@@ -253,6 +265,12 @@ ssize_t NonBlockingUnixCommunicationSocket::partialRead(char* buffer, ssize_t ma
         remaining = maxLength - totalRead;        
 
         step = read(mSocket, buffer + totalRead,  (remaining > chunkSize ? chunkSize : remaining));
+
+        if(step == -1 && errno == EINTR && CheckForTimeout() == false){
+             SE_TRACE_WARNING("read was interrupted by signal\n");
+             continue;
+        }
+
         if (step == -1)
         {
             if (errno != EAGAIN)
@@ -291,6 +309,10 @@ ssize_t  NonBlockingUnixCommunicationSocket::writeRaw(const char* data, ssize_t 
     do
     {
         step = write(mSocket, data + total_write, length - total_write);
+        if(step == -1 && errno == EINTR && CheckForTimeout() == false){
+             SE_TRACE_WARNING("write was interrupted by signal\n");
+             continue;
+        }
 
         if (step == -1 && errno != EAGAIN)
         {
@@ -343,8 +365,9 @@ ssize_t  NonBlockingUnixCommunicationSocket::writeRaw(const char* data, ssize_t 
                 continue;
             }
         }
-
-        eventNum = epoll_wait(mEpoll, mEvents, MAX_EVENTS, epollTimeout);
+        do {
+            eventNum = epoll_wait(mEpoll, mEvents, MAX_EVENTS, epollTimeout);
+        } while (eventNum == -1 && errno == EINTR && CheckForTimeout() == false);
         if (eventNum == -1)
         {
             errorDetected = true;
@@ -389,11 +412,16 @@ ssize_t  NonBlockingUnixCommunicationSocket::writeRaw(const char* data, ssize_t 
     }
     while(total_write < length);
 
-    event.data.fd = mSocket;
-    event.events = EPOLLET;
-    registerSocket = epoll_ctl (mEpoll, EPOLL_CTL_MOD, mSocket, &event);
-    if (registerSocket != 0)
-    {
+    if(mSocket!=-1){
+        event.data.fd = mSocket;
+        event.events = EPOLLET;
+        registerSocket = epoll_ctl (mEpoll, EPOLL_CTL_MOD, mSocket, &event);
+        if (registerSocket != 0)
+        {
+            return -1;
+        }
+    }else
+    {//disconneded due to error.
         return -1;
     }
 

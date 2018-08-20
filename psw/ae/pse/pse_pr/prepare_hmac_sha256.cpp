@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,11 @@ PrepareHMACSHA256::PrepareHMACSHA256(const Ipp8u* key, size_t keyLength)
         }
 
         if (keyLength > INT32_MAX)
+        {
+            free(m_pCtx);
+            m_pCtx = NULL;
             break;
+        }
 
         m_ippstatus = ippsHMAC_Init(key, (int)keyLength, m_pCtx, IPP_ALG_HASH_SHA256);
         if (m_ippstatus != ippStsNoErr)

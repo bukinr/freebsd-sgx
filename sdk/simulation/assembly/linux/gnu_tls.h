@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,33 +62,33 @@ typedef struct
 /* x86_64 uses %fs as the thread register */
 #define GET_DTV()                               \
   ({ dtv_t* __dtv;                              \
-     asm ("mov %%fs:%c1, %0" : "=r"(__dtv)      \
+     __asm__ ("mov %%fs:%c1, %0" : "=r"(__dtv)      \
           : "i" (offsetof (tcbhead_t, dtv)));   \
      __dtv; })
 
 #define GET_FS_GS_0()                                    \
   ({  uintptr_t __orig;                                  \
-      asm volatile ("mov %%fs:0x0, %0" : "=r"(__orig));  \
+      __asm__ volatile ("mov %%fs:0x0, %0" : "=r"(__orig));  \
       __orig; })
 
 #define SET_FS_GS_0(val)                                 \
-  ({ asm volatile ("mov %0, %%fs:0x0" : :"r"(val));})
+  ({ __asm__ volatile ("mov %0, %%fs:0x0" : :"r"(val));})
 
 #elif defined(__i386) || defined(__i386__)
 /* IA32 uses %gs as the thread register */
 #define GET_DTV()                               \
   ({ dtv_t* __dtv;                              \
-     asm ("mov %%gs:%c1, %0" : "=r"(__dtv)      \
+     __asm__ ("mov %%gs:%c1, %0" : "=r"(__dtv)      \
           : "i" (offsetof (tcbhead_t, dtv)));   \
      __dtv; })
 
 #define GET_FS_GS_0()                                    \
   ({  uintptr_t __orig;                                  \
-      asm volatile ("mov %%gs:0x0, %0" : "=r"(__orig));  \
-	 __orig; })
+      __asm__ volatile ("mov %%gs:0x0, %0" : "=r"(__orig));  \
+     __orig; })
 
 #define SET_FS_GS_0(val)                                 \
-  ({ asm volatile ("mov %0, %%gs:0x0" : :"r"(val));})
+  ({ __asm__ volatile ("mov %0, %%gs:0x0" : :"r"(val));})
 
 #endif
 

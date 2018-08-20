@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 TOP_DIR  = ../../..
 include $(TOP_DIR)/buildenv.mk
 
-IPC_COMMON_DIR        := ../common/
+IPC_COMMON_DIR        := ../common
 IPC_COMMON_SRC_DIR    := $(IPC_COMMON_DIR)/src
 IPC_COMMON_INC_DIR    := $(IPC_COMMON_DIR)/inc
 IPC_COMMON_PROTO_DIR  := source/protobuf
@@ -76,7 +76,7 @@ INCLUDE += -I$(LINUX_PSW_DIR)/ae/inc                        \
 INCLUDE += -I$(LINUX_PSW_DIR)/ae/pve                        \
            -I$(LINUX_PSW_DIR)/ae/pse/pse_op
 
-INCLUDE += -I$(LINUX_EXTERNAL_DIR)/epid                            \
+INCLUDE += -I$(LINUX_EXTERNAL_DIR)/epid-sdk                        \
            -I$(LINUX_EXTERNAL_DIR)/sqlite/src                      \
            -I$(LINUX_EXTERNAL_DIR)/DALSdk/JHI/linux
 
@@ -90,7 +90,7 @@ INCLUDE += -I$(SGX_IPP_INC) \
 EDGER8R  := $(LINUX_SDK_DIR)/edger8r/linux/_build/Edger8r.native
 
 
-SQLITECFLAGS := -fPIC -Wall -Wno-unused-const-variable -Werror
+SQLITECFLAGS := -fpie -Wall -Werror -Wno-maybe-uninitialized $(call cc-disable-warning,unused-const-variable)
 ifeq ($(CC_BELOW_4_9), 1)
 	SQLITECFLAGS += -fstack-protector
 else
@@ -100,7 +100,7 @@ endif
 ifdef DEBUG
 	SQLITECFLAGS += -ggdb -DDEBUG -UNDEBUG
 else
-	SQLITECFLAGS += -O2 -UDEBUG -DNDEBUG
+	SQLITECFLAGS += -O2 -UDEBUG -DNDEBUG -D_FORTIFY_SOURCE=2
 endif
 ifeq ($(ARCH), x86)
 	SQLITECFLAGS += -m32
@@ -113,8 +113,9 @@ ifdef PROFILE
         CFLAGS += -D_PROFILE_
 endif
 
-CXXFLAGS += -fPIC
-CFLAGS := $(filter-out -fPIC -Werror, $(CFLAGS))
+CXXFLAGS += -fpie
+CFLAGS += -fpie
+CFLAGS := $(filter-out -Werror, $(CFLAGS))
 LINUX_SE_WRAPPER = $(COMMON_DIR)/se_wrapper
 
 ifdef DEBUG 
@@ -240,6 +241,8 @@ IPC_SRC  :=  AECloseSessionRequest.cpp    \
              AESGXSwitchExtendedEpidGroupResponse.cpp \
              AEReportAttestationRequest.cpp \
              AEReportAttestationResponse.cpp \
+             AESGXRegisterRequest.cpp \
+             AESGXRegisterResponse.cpp \
              SocketTransporter.cpp \
              AEGetLaunchTokenResponse.cpp  \
              UnixCommunicationSocket.cpp \
@@ -276,7 +279,8 @@ OBJ        := $(IPC_SRC:.cpp=.o) \
 
 OBJ        += $(SQLITESRC:.c=.o)
 
-LDUFLAGS := -pthread -L$(BUILD_DIR) $(URTSLIB)
+LDUFLAGS := -pthread -L$(BUILD_DIR) $(URTSLIB) 
+LDUFLAGS += -pie $(COMMON_LDFLAGS)
 
 APPNAME           := aesm_service
 APPNAME_DEBUG     := aesm_service.debug
@@ -309,7 +313,7 @@ messages.pb.o : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
 	$(CXX) $(filter-out -Wshadow, $(CXXFLAGS)) $(INCLUDE) -I/usr/include/c++/v1/ -c $< -o $@
 
 consttime_memequal.o :consttime_memequal.c
-	$(CC) $(filter-out -O2,$(CFLAGS)) -fPIC -O1 $(INCLUDE) -c $< -o $@
+	$(CC) $(filter-out -O2,$(CFLAGS)) -O1 $(INCLUDE) -c $< -o $@
 
 sqlite3.o :sqlite3.c
 	$(CC) $(SQLITECFLAGS) $(INCLUDE) -c $< -o $@
@@ -325,8 +329,14 @@ ifndef DEBUG
 	$(OBJCOPY) --add-gnu-debuglink=$(APPNAME_DEBUG) $(APPNAME)
 endif
 
-
-./source/le/LEClass.o: ${AESM_EXTENSION}/launch_enclave_u.c
+ifeq ($(BUILD_REF_LE), 1)
+LE_DEP := ${AESM_EXTENSION}/ref_le_u.c
+LE_EDL :=  ${LINUX_PSW_DIR}/ae/ref_le/ref_le.edl
+else
+LE_DEP := ${AESM_EXTENSION}/launch_enclave_u.c
+LE_EDL := ${LINUX_PSW_DIR}/ae/le/launch_enclave.edl
+endif
+./source/le/LEClass.o: $(LE_DEP)
 ./source/pve/PVEClass.o: ${AESM_EXTENSION}/provision_enclave_u.c
 ./source/qe/QEClass.o: ${AESM_EXTENSION}/quoting_enclave_u.c
 ./source/pse_op/PSEClass.o: ${AESM_EXTENSION}/pse_op_u.c
@@ -343,7 +353,7 @@ else
 	@cd $(RDRAND_LIBDIR);./configure CFLAGS=-fPIC CXX=g++48 CC=gcc48
 endif
 
-${AESM_EXTENSION}/launch_enclave_u.c: ${LINUX_PSW_DIR}/ae/le/launch_enclave.edl
+$(LE_DEP): $(LE_EDL)
 	@$(EDGER8R) --untrusted --untrusted-dir ${AESM_EXTENSION} $<
 
 ${AESM_EXTENSION}/provision_enclave_u.c: ${LINUX_PSW_DIR}/ae/pve/provision_enclave.edl

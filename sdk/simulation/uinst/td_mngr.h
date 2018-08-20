@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +64,7 @@ extern "C" {
 #include "gnu_tls.h"
 extern uint8_t __ImageBase;
 int td_mngr_set_td(void *enclave_base, tcs_t *tcs);
-int td_mngr_restore_td(tcs_t *tcs);
+int td_mngr_restore_td(tcs_t *tcs)  __attribute__((section (".nipx")));
 
 #ifdef __cplusplus
 }

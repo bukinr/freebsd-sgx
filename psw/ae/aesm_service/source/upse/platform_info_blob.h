@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +33,7 @@
 #define _PLATFORM_INFO_BLOB_H_
 
 #include <stdint.h>
+#include "aeerror.h"
 #include "epid_pve_type.h"
 #include "sgx_tcrypto.h"
 

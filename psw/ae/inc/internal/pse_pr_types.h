@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,9 +33,6 @@
 #define _TYPES_H_
 
 #include <stdint.h>
-
-
-#define MAX_PCH_TYPE  2
 
 #ifndef UINT64
 #define UINT64   uint64_t
@@ -134,18 +131,5 @@ typedef struct _SAFEID_CRYPTO_CONTEXT
 
 
 #pragma pack(pop)
-
-
-extern void swap(void * pBuf, UINT32 buflen);
-extern void InitRSAKey(UINT8 PlatformKeyId);
-extern STATUS ClsProvisionEpid_1_1();
-extern STATUS ClsMeCreatePermitRequest();
-extern STATUS ClsExchangeEpidRequest();
-extern STATUS ClsPsCreatePermitResponse();
-
-extern UINT16 CurrentClassId;
-extern UINT16 CurrentSubClass;
-
-
 
 #endif

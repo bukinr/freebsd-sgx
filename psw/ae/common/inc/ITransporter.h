@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,8 +42,8 @@ class ITransporter{
         virtual ~ITransporter() {};
 
         virtual uae_oal_status_t transact(IAERequest* request, IAEResponse* response, uint32_t timeout) = 0;
-        virtual IAERequest* receiveRequest(ICommunicationSocket* sock) = 0; //throw(SockDisconnectedException) = 0;
-        virtual uae_oal_status_t sendResponse(IAEResponse* response, ICommunicationSocket* sock) = 0;
+        virtual IAERequest* receiveRequest(ICommunicationSocket* sock) = 0;
+        virtual void sendResponse(IAEResponse* response, ICommunicationSocket* sock) = 0;
 
     protected:
 };

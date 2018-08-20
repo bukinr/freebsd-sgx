@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,7 +118,7 @@ int _tmain(int argc, _TCHAR* argv[])
         printf("\nLoad Enclave Failure");
     }
 
-    printf("\nAvaliable Enclaves");
+    printf("\nAvailable Enclaves");
     printf("\nEnclave1 - EnclaveID %" PRIx64, e1_enclave_id);
     printf("\nEnclave2 - EnclaveID %" PRIx64, e2_enclave_id);
     printf("\nEnclave3 - EnclaveID %" PRIx64, e3_enclave_id);

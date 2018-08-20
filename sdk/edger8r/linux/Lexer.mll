@@ -1,5 +1,5 @@
 (*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -88,6 +88,7 @@ rule tokenize = parse
   | "import"     { Timport }
   | "allow"      { Tallow }
   | "public"     { Tpublic }
+  | "transition_using_threads"       { Tswitchless }
   | "include"    { Tinclude }
   | "propagate_errno"      { Tpropagate_errno }
 

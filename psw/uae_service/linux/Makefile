@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -51,19 +51,20 @@ INCLUDE += -I$(LINUX_PSW_DIR)/ae/common \
            -I$(LINUX_PSW_DIR)/ae/inc/internal    \
            -I$(LINUX_SDK_DIR)/tseal
 
-INCLUDE += -I$(LINUX_EXTERNAL_DIR)/epid     \
+INCLUDE += -I$(LINUX_EXTERNAL_DIR)/epid-sdk    \
            -I$(IPC_COMMON_INC_DIR) \
            -I$(UAE_INC_DIR) \
            -I$(IPC_COMMON_PROTO_DIR) \
            -I$(LINUX_PSW_DIR)/ae/aesm_service/source
 
-CXXFLAGS += -fPIC -g -DPROTOBUF_INLINE_NOT_IN_HEADERS=0
+CXXFLAGS += -fPIC -Wno-unused-parameter -g -DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 
 EXTERNAL_LIB += -L/usr/local/lib -lprotobuf -I/usr/local/include
  
 vpath %.cpp .. $(COMMON_DIR)/src  $(IPC_COMMON_SRC_DIR) $(IPC_COMMON_PROTO_DIR) $(UAE_SRC_DIR) $(AE_COMMON_DIR)
+vpath %.c   $(COMMON_DIR)/src
 
-
+C_SRC   := se_trace.c
 
 IPC_SRC  := AECloseSessionRequest.cpp    \
              AEGetQuoteResponse.cpp \
@@ -90,6 +91,8 @@ IPC_SRC  := AECloseSessionRequest.cpp    \
              AESGXGetExtendedEpidGroupIdResponse.cpp \
              AESGXSwitchExtendedEpidGroupRequest.cpp \
              AESGXSwitchExtendedEpidGroupResponse.cpp \
+             AESGXRegisterRequest.cpp \
+             AESGXRegisterResponse.cpp \
              SocketTransporter.cpp \
              AEGetLaunchTokenResponse.cpp  \
              UnixCommunicationSocket.cpp \
@@ -108,9 +111,9 @@ SRC :=       AEServicesImpl.cpp \
              uae_service_version.cpp \
              uae_service_assert.cpp
 
-OBJ := $(SRC:.cpp=.o) $(IPC_SRC:.cpp=.o)  $(PROTOBUF_SRC:.cc=.o) 
+OBJ := $(C_SRC:.c=.o) $(SRC:.cpp=.o) $(IPC_SRC:.cpp=.o)  $(PROTOBUF_SRC:.cc=.o) 
 
-LDUFLAGS:= -pthread -L$(BUILD_DIR)
+LDUFLAGS:= -pthread $(COMMON_LDFLAGS)
 LDUFLAGS += -Wl,--version-script=uae_service.lds -Wl,--gc-sections
 
 LIBNAME  = libsgx_uae_service.so
@@ -149,6 +152,9 @@ messages.pb.o : $(IPC_COMMON_PROTO_DIR)/messages.pb.cc
 	$(CXX) $(filter-out -Wshadow, $(CXXFLAGS)) -I/usr/include/c++/v1/ -I/usr/local/include -c $< -o $@
 %.o :%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDE) -Werror -fPIC -c $< -o $@
+
 
 $(BUILD_DIR):
 	@$(MKDIR) $@

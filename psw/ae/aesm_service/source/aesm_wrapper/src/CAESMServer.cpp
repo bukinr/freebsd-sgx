@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,15 +116,9 @@ void CAESMServer::doWork()
         std::list<ICommunicationSocket*>::const_iterator it = socketsWithData.begin();
 
         for (;it != socketsWithData.end(); ++it) {
-            try {
-                IAERequest  *request = m_transporter->receiveRequest(*it);  
-                RequestData *requestData = new RequestData(*it, request);   //deleted by the AESMWorkerThread after response is sent
-
-                m_queueManager->enqueue(requestData);
-
-            } catch (SockDisconnectedException& e) {
-                m_selector->removeSocket(*it);
-            }
+            IAERequest  *request = m_transporter->receiveRequest(*it);  
+            RequestData *requestData = new RequestData(*it, request);   //deleted by the AESMWorkerThread after response is sent
+            m_queueManager->enqueue(requestData);
         }
     }
 

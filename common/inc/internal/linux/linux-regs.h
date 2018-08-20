@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,6 +85,9 @@
 #define SE_EGETKEY    1
 #define SE_EENTER     2
 #define SE_EEXIT      4
+#define SE_EACCEPT    5
+#define SE_EMODPE     6
+
 
 #define SE_ECREATE    0
 #define SE_EADD       1

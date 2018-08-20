@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -149,7 +149,7 @@ uint32_t test_replay_protected_drm_update_limitation()
         if(!result)
         {
             result = 1;
-            cerr<<"\tUnexpcted success."<<endl
+            cerr<<"\tUnexpected success."<<endl
                 <<"\tFailed to catch update limitation."<<endl;
         }
     }while(0);
@@ -200,7 +200,7 @@ uint32_t test_replay_protected_drm_replay_attack_protection()
             <<"\tReplay attack to DRM functions is caught."<<endl;
         else
         {
-            cerr<<"\tUnexpcted success."<<endl
+            cerr<<"\tUnexpected success."<<endl
             <<"\tReplay attack to DRM functions is NOT caught."<<endl;
             result = 1;
             break;
@@ -277,7 +277,7 @@ uint32_t test_time_based_policy_expiration()
     }
     else
     {
-        cerr<<"\tUnexpcted success."<<endl
+        cerr<<"\tUnexpected success."<<endl
             <<"\tTime based policy failed to catch expiration."<<endl;
         return 1;
     }

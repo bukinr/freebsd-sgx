@@ -1,5 +1,5 @@
 (*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,13 +64,11 @@ type attr_value =
 
 type ptr_size = {
   ps_size     : attr_value option;
-  ps_sizefunc : string     option;
   ps_count    : attr_value option;
 }
 
 let empty_ptr_size = {
   ps_size     = None;
-  ps_sizefunc = None;
   ps_count    = None;
 }
 
@@ -159,6 +157,7 @@ type func_decl = {
 type trusted_func = {
   tf_fdecl   : func_decl;
   tf_is_priv : bool;
+  tf_is_switchless : bool;
 }
 
 type untrusted_func = {
@@ -166,6 +165,7 @@ type untrusted_func = {
   uf_fattr      : func_attr;
   uf_allow_list : string list;
   uf_propagate_errno : bool;
+  uf_is_switchless    : bool;
 }
 
 type enclave_func =
@@ -189,6 +189,26 @@ type expr =
 type enclave = {
   ename : string;           (* enclave name. *)
   eexpr : expr list;        (* expressions inside enclave. *)
+}
+
+(*
+  Plugin.ml operates on an enclave_content instance.
+  CodeGen.ml calls Plugin.ml if a plugin is installed and hence
+  depends on Plugin.ml.
+  To prevent cyclic dependency between Plugin.ml and Codegen.ml,
+  enclave_content is defined here. Additionally, the enclave_content 
+  type in CodeGen.ml is defined to be equivalent to the enclave_content 
+  type defined here.
+*)
+type enclave_content = {
+  file_shortnm : string; (* the short name of original EDL file *)
+  enclave_name : string; (* the normalized C identifier *)
+
+  include_list : string list;
+  import_exprs : import_decl list;
+  comp_defs    : composite_type list;
+  tfunc_decls  : trusted_func   list;
+  ufunc_decls  : untrusted_func list;
 }
 
 (* -------------------------------------------------------------------

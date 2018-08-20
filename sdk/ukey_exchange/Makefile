@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+# Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -44,7 +44,7 @@ vpath %.cpp $(COMMON_DIR)/src
 
 vpath %.c $(TOP_DIR)/common/src
 
-CXXFLAGS += -fPIC -fno-rtti $(INCLUDE)
+CXXFLAGS += -fPIC -fno-exceptions -fno-rtti $(INCLUDE)
 CFLAGS += -fPIC $(INCLUDE)
 
 OBJ := ukey_exchange.o se_thread.o ukey_exchange_version.o 

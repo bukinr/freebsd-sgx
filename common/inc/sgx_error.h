@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,7 @@ typedef enum _status_t
     SGX_ERROR_MODE_INCOMPATIBLE  = SGX_MK_ERROR(0x200e),      /* The target enclave 32/64 bit mode or sim/hw mode is incompatible with the mode of current uRTS. */
     SGX_ERROR_ENCLAVE_FILE_ACCESS = SGX_MK_ERROR(0x200f),     /* Can't open enclave file. */
     SGX_ERROR_INVALID_MISC        = SGX_MK_ERROR(0x2010),     /* The MiscSelct/MiscMask settings are not correct.*/
+    SGX_ERROR_INVALID_LAUNCH_TOKEN = SGX_MK_ERROR(0x2011),    /* The launch token is not correct.*/
 
     SGX_ERROR_MAC_MISMATCH       = SGX_MK_ERROR(0x3001),      /* Indicates verification error for reports, sealed datas, etc */
     SGX_ERROR_INVALID_ATTRIBUTE  = SGX_MK_ERROR(0x3002),      /* The enclave is not authorized */
@@ -87,6 +88,15 @@ typedef enum _status_t
     SGX_ERROR_MC_OVER_QUOTA             = SGX_MK_ERROR(0x400f),   /* Monotonic counters exceeds quota limitation */
     SGX_ERROR_KDF_MISMATCH              = SGX_MK_ERROR(0x4011),   /* Key derivation function doesn't match during key exchange */
     SGX_ERROR_UNRECOGNIZED_PLATFORM     = SGX_MK_ERROR(0x4012),   /* EPID Provisioning failed due to platform not recognized by backend server*/
+
+    SGX_ERROR_NO_PRIVILEGE              = SGX_MK_ERROR(0x5002),   /* Not enough privilege to perform the operation */
+
+    /* SGX Protected Code Loader Error codes*/
+    SGX_ERROR_PCL_ENCRYPTED             = SGX_MK_ERROR(0x6001),   /* trying to encrypt an already encrypted enclave */
+    SGX_ERROR_PCL_NOT_ENCRYPTED         = SGX_MK_ERROR(0x6002),   /* trying to load a plain enclave using sgx_create_encrypted_enclave */
+    SGX_ERROR_PCL_MAC_MISMATCH          = SGX_MK_ERROR(0x6003),   /* section mac result does not match build time mac */
+    SGX_ERROR_PCL_SHA_MISMATCH          = SGX_MK_ERROR(0x6004),   /* Unsealed key MAC does not match MAC of key hardcoded in enclave binary */
+    SGX_ERROR_PCL_GUID_MISMATCH         = SGX_MK_ERROR(0x6005),   /* GUID in sealed blob does not match GUID hardcoded in enclave binary */
     
     /* SGX errors are only used in the file API when there is no appropriate EXXX (EINVAL, EIO etc.) error code */
     SGX_ERROR_FILE_BAD_STATUS               = SGX_MK_ERROR(0x7001),	/* The file is in bad status, run sgx_clearerr to try and fix it */
@@ -98,6 +108,9 @@ typedef enum _status_t
     SGX_ERROR_FILE_RECOVERY_NEEDED          = SGX_MK_ERROR(0x7007),	/* When openeing the file, recovery is needed, but the recovery process failed */
     SGX_ERROR_FILE_FLUSH_FAILED             = SGX_MK_ERROR(0x7008),	/* fflush operation (to disk) failed (only used when no EXXX is returned) */
     SGX_ERROR_FILE_CLOSE_FAILED             = SGX_MK_ERROR(0x7009),	/* fclose operation (to disk) failed (only used when no EXXX is returned) */
+
+
+    SGX_INTERNAL_ERROR_ENCLAVE_CREATE_INTERRUPTED = SGX_MK_ERROR(0xF001), /* The ioctl for enclave_create unexpectedly failed with EINTR. */ 
 
 } sgx_status_t;
 

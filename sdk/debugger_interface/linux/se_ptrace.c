@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -149,7 +149,7 @@ static int get_exec_class(pid_t pid)
 
 static inline uint32_t get_ssa_frame_size(pid_t pid, thread_data_t* td)
 {
-    uint32_t ssa_frame_size = td->ssa_frame_size;
+    uint32_t ssa_frame_size = ROUND_TO_PAGE(td->xsave_size) >> SE_PAGE_SHIFT;
 #ifdef __x86_64__
     //on x64, we may debug elf32 enclave, we need refer to different offset in td field.
     if(ELFCLASS32 == get_exec_class(pid))

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,6 +47,21 @@ public:
     void unlock(){se_mutex_unlock(&m_mutex);}
 private:
     se_mutex_t m_mutex;
+};
+
+class Cond: private Uncopyable
+{
+public:
+    Cond(){se_mutex_init(&m_mutex); se_thread_cond_init(&m_cond);}
+    ~Cond(){se_mutex_destroy(&m_mutex); se_thread_cond_destroy(&m_cond);}
+    void lock(){se_mutex_lock(&m_mutex);}
+    void unlock(){se_mutex_unlock(&m_mutex);}
+    void wait(){se_thread_cond_wait(&m_cond, &m_mutex);}
+    void signal(){se_thread_cond_signal(&m_cond);}
+    void broadcast(){se_thread_cond_broadcast(&m_cond);}
+private:
+    se_mutex_t m_mutex;
+    se_cond_t  m_cond;
 };
 
 class LockGuard: private Uncopyable

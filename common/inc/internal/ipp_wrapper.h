@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2018 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,6 +34,17 @@
 
 #include "ippcp.h"
 
+#ifndef CLEAR_FREE_MEM
+#define CLEAR_FREE_MEM(address, size) {             \
+    if (address != NULL) {                          \
+        if (size > 0) {                             \
+            (void)memset_s(address, size, 0, size); \
+        }                                           \
+        free(address);                              \
+     }                                              \
+}
+#endif
+
 #ifndef SAFE_FREE_MM
 #define SAFE_FREE_MM(ptr) {\
     if(ptr != NULL)     \
@@ -55,7 +66,8 @@ extern "C" {
 #endif
 
 IppStatus newBN(const Ipp32u *data, int size_in_bytes, IppsBigNumState **p_new_BN);
-
+IppStatus newPrimeGen(int nMaxBits, IppsPrimeState ** pPrimeG);
+IppStatus newPRNG(IppsPRNGState **pRandGen);
 IppStatus create_rsa_priv1_key(int n_byte_size, int d_byte_size, const Ipp32u *n, const Ipp32u *d, IppsRSAPrivateKeyState **new_pri_key1);
 
 IppStatus create_rsa_priv2_key(int p_byte_size, const Ipp32u *p, const Ipp32u *q,
@@ -63,12 +75,6 @@ IppStatus create_rsa_priv2_key(int p_byte_size, const Ipp32u *p, const Ipp32u *q
                                            IppsRSAPrivateKeyState **new_pri_key2);
 
 IppStatus create_rsa_pub_key(int n_byte_size, int e_byte_size, const Ipp32u *n, const Ipp32u *e, IppsRSAPublicKeyState **new_pub_key);
-
-IppStatus create_validate_rsa_key_pair(int n_byte_size, int e_byte_size, const Ipp32u *n, const Ipp32u *d, const Ipp32u *e, const Ipp32u *p, const Ipp32u *q, 
-                                                     const Ipp32u *dmp1, const Ipp32u *dmq1, const Ipp32u *iqmp,
-                                                     IppsRSAPrivateKeyState **new_pri_key, IppsRSAPublicKeyState **new_pub_key, int *validate_result);
-
-IppStatus get_pub_key(const IppsRSAPublicKeyState *pub_key, int *e_byte_size, Ipp32u *e, int *n_byte_size, Ipp32u *n);
 
 void secure_free_BN(IppsBigNumState *pBN, int size_in_bytes);
 
