@@ -32,6 +32,8 @@
 
 include ../../buildenv.mk
 
+CXX=g++48
+CC=gcc48
 
 CXXFLAGS += -fno-rtti -fno-exceptions -fPIC
 
