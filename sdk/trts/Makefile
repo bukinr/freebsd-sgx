@@ -31,8 +31,8 @@
 
 include ../../buildenv.mk
 
-CXX=g++
-CC=gcc
+CXX=g++48
+CC=gcc48
 
 CPPFLAGS += -I$(COMMON_DIR)/inc          \
             -I$(COMMON_DIR)/inc/internal \

@@ -51,11 +51,11 @@ let read_process (command : string) : Unix.process_status * string =
 
 (*Return None if gcc not found, caller should handle it*)
 let processor_macro ( full_path : string) : string option=
-  let gcc_path = snd (read_process "which gcc") in
+  let gcc_path = snd (read_process "which gcc48") in
   if not (String.contains gcc_path  '/' ) then
     (eprintf "warning: preprocessor is not found\n"; None)
   else
-    let command = sprintf "gcc -x c -E -P \"%s\" 2>/dev/null" full_path in
+    let command = sprintf "gcc48 -x c -E -P \"%s\" 2>/dev/null" full_path in
     let output = read_process command in
     match fst output with
       | WEXITED exit_status -> 

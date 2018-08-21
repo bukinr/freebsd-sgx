@@ -54,7 +54,7 @@ all: $(TCMALLOC) | $(BUILD_DIR)
 
 .PHONY: libtcmalloc
 libtcmalloc:
-	cd $(SRCDIR) && ( test -f Makefile || ./autogen-linux.sh $(DEBUG_FLAG) $(COMMON_FLAG)) && $(MAKE)
+	cd $(SRCDIR) && ( test -f Makefile || ./autogen-linux.sh $(DEBUG_FLAG) $(COMMON_FLAG)) && $(MAKE) CXX=g++48 CC=gcc48
 
 $(TCMALLOC): libtcmalloc
 	$(CP) $(SRCDIR)/.libs/libtcmalloc_minimal.a $(TCMALLOC)
