@@ -55,6 +55,7 @@ extern "C" sgx_status_t sgx_create_le(const char* file_name, const char* prd_css
     int fd = open(file_name, O_RDONLY);
     if(-1 == fd)
     {
+	printf("cant open file %s\n", file_name);
         SE_TRACE(SE_TRACE_ERROR, "Couldn't open the enclave file, error = %d\n", errno);
         return SGX_ERROR_ENCLAVE_FILE_ACCESS;
     }

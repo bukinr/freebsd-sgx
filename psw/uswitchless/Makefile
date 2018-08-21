@@ -31,8 +31,8 @@
 
 include ../../buildenv.mk
 
-# CXXFLAGS += -fPIC -Werror -g
-CFLAGS += -Werror -D_GNU_SOURCE -fPIC -g
+CXXFLAGS += -fPIC -Werror -g
+CFLAGS += -D_GNU_SOURCE -fPIC -g
 CFLAGS += $(ADDED_INC)
 
 CFLAGS += -I$(COMMON_DIR)/inc/ \

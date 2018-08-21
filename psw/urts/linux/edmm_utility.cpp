@@ -163,6 +163,10 @@ extern "C" bool is_driver_support_edmm(int hdevice)
     if (-1 == hdevice)
         return false;
 
+#ifdef __FreeBSD__
+    return false;
+#endif
+
     sgx_modification_param param;
     param.flags = 0;
     param.range.start_addr = 0;

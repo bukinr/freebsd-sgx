@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
-#include <linux/futex.h>
+//#include <linux/futex.h>
 #include <limits.h>
 
 /*=========================================================================
@@ -76,21 +76,27 @@ void sl_workers_destroy(struct sl_workers* workers)
  * Sleep and wakeup threads
  *========================================================================*/
 
+#if 0
 static inline long futex(volatile int32_t* futex_addr, int32_t futex_op, int32_t futex_val) 
 {
     return syscall(__NR_futex, futex_addr, futex_op, futex_val, NULL, NULL, 0);
 }
+#endif
 
 void sleep_this_thread(struct sl_workers* workers) 
 {
    lock_inc64(&workers->num_sleeping);
-   futex(&workers->should_wake, FUTEX_WAIT, 0);
+   //futex(&workers->should_wake, FUTEX_WAIT, 0);
    lock_dec64(&workers->num_sleeping);
 }
 
 void wake_all_threads(struct sl_workers* workers)
 {
-    futex(&workers->should_wake, FUTEX_WAKE, INT_MAX);
+	uint32_t *addr;
+
+	addr = (uint32_t *)&workers->should_wake;
+
+    //futex(&workers->should_wake, FUTEX_WAKE, INT_MAX);
 }
 
 

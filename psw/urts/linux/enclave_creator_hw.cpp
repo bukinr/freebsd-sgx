@@ -48,6 +48,7 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define POINTER_TO_U64(A) ((__u64)((uintptr_t)(A)))
   
@@ -126,7 +127,8 @@ int EnclaveCreatorHW::create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id,
 
     //SECS:BASEADDR must be naturally aligned on an SECS.SIZE boundary
     //This alignment is guaranteed by driver
-    void* enclave_base = mmap(NULL, (size_t)secs->size, PROT_NONE, MAP_SHARED, m_hdevice, 0);
+    void* enclave_base = mmap(NULL, (size_t)secs->size, PROT_NONE, MAP_SHARED | MAP_ALIGNED((int)log2(secs->size)), m_hdevice, 0);
+	printf("enclave_base %lx\n", enclave_base);
     if(enclave_base == MAP_FAILED)
     {
         SE_TRACE(SE_TRACE_WARNING, "\ncreate enclave: mmap failed, errno = %d\n", errno);

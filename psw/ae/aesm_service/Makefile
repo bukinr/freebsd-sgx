@@ -90,7 +90,7 @@ INCLUDE += -I$(SGX_IPP_INC) \
 EDGER8R  := $(LINUX_SDK_DIR)/edger8r/linux/_build/Edger8r.native
 
 
-SQLITECFLAGS := -fpie -Wall -Werror -Wno-maybe-uninitialized $(call cc-disable-warning,unused-const-variable)
+SQLITECFLAGS := -fpie -Wall -Werror -Wno-uninitialized $(call cc-disable-warning,unused-const-variable)
 ifeq ($(CC_BELOW_4_9), 1)
 	SQLITECFLAGS += -fstack-protector
 else
@@ -319,7 +319,7 @@ sqlite3.o :sqlite3.c
 	$(CC) $(SQLITECFLAGS) $(INCLUDE) -c $< -o $@
 
 $(APPNAME): $(OBJ) $(LIBNAME) sgx_tcrypto -lrdrand urts
-	$(CXX) $(CXXFLAGS) $(OBJ) $(LIBNAME) $(LDUFLAGS) $(EXTERNAL_LIB) /usr/lib/libc++.a -o $@
+	$(CXX) $(CXXFLAGS) $(OBJ) $(LIBNAME) $(LDUFLAGS) $(EXTERNAL_LIB) -o $@ -fuse-ld=bfd
 
 $(APPNAME_DEBUG): $(APPNAME)
 ifndef DEBUG

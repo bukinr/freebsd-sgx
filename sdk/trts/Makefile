@@ -31,6 +31,9 @@
 
 include ../../buildenv.mk
 
+CXX=g++
+CC=gcc
+
 CPPFLAGS += -I$(COMMON_DIR)/inc          \
             -I$(COMMON_DIR)/inc/internal \
             -I$(COMMON_DIR)/inc/tlibc
